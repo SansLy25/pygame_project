@@ -2,7 +2,9 @@ from vectors import Vector
 from vectors import Speed, Acceleration
 from pygame import Rect
 from animation import Animation
+from worldgen import PerlinNoise
 import pygame
+import random
 
 
 class GameObject:
@@ -235,8 +237,11 @@ if __name__ == "__main__":
 
     screen_width = 800
     screen_height = 600
+    world_width = 50 # Длина мира (в блоках)
     screen = pygame.display.set_mode((screen_width, screen_height))
     pygame.display.set_caption("GameObject Example")
+    noise = PerlinNoise(random.randint(1000000, 99999999))
+    world = [] # Массив, включающий в себя все блоки мира
 
     game_object_animation = Animation(
                             [f'../../assets/merchant_{i}.png' for i in
@@ -249,7 +254,11 @@ if __name__ == "__main__":
                                             90)),
                         animation=game_object_animation)
 
-    surface = GameObject(0, 200, 1000, 1000)
+    h = pygame.display.get_surface().get_height()
+    for x in range(world_width):
+        for y in range(round(noise.get(x / 10) * 10) + 9):
+            world.append(GameObject(x * 25, h - (y * 25), 25, 25))
+
     running = True
     clock = pygame.time.Clock()
     flag = True
@@ -281,10 +290,11 @@ if __name__ == "__main__":
                                                               180))
             game_object.target_orientation = 'left'
 
-        game_object.resolve_collision(surface)
         screen.fill((0, 0, 0))
         game_object.draw(screen)
-        surface.draw(screen)
+        for block in world:
+            game_object.resolve_collision(block)
+            block.draw(screen)
         game_object.move()
 
         pygame.display.flip()
