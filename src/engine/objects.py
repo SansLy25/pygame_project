@@ -1,26 +1,42 @@
-from vectors import Vector
-from vectors import Speed, Acceleration
-from pygame import Rect
-from animation import Animation
+import math
+
 import pygame
+from pygame import Rect
+
+from animation import Animation
 from commons import *
+from vectors import Speed, Acceleration
+from vectors import Vector
+
 
 class App:
     def __init__(self):
+        self.is_menu_music = True
         self.menu_sprites = pygame.sprite.Group()
         self.play_button = Button(50, 275, 160, 85, 'Play', '../../assets/Default.png')
-        self.background_sprite = pygame.transform.scale(pygame.image.load('../../assets/menu_background.jpg'), (800, 600))
+        self.background_sprite = pygame.transform.scale(pygame.image.load('../../assets/menu_background.jpg'),
+                                                        (800, 600))
+        self.resume_button = Button(300, 140, 200, 80, 'Resume', '../../assets/Default.png')
+        self.settings_button = Button(300, 260, 200, 80, 'Settings', '../../assets/Default.png')
+        self.exit_button = Button(300, 380, 200, 80, 'Exit', '../../assets/Default.png')
         self.logo_sprite = pygame.transform.scale(pygame.image.load('../../assets/Logo.png'), (1835 // 3, 751 // 3))
 
     def start_screen(self):
+        if not self.is_menu_music:
+            pygame.mixer.music.load('../../assets/menuLoop.mp3')
+            pygame.mixer.music.play(-1)
+            self.is_menu_music = True
         screen.blit(self.background_sprite, (0, 0))
-
         screen.blit(self.logo_sprite, (0, 0))
+        self.play_button.draw()
 
-    def music(self):
-        pygame.mixer.music.load('../../assets/menuLoop.mp3')
-        pygame.mixer.music.play(-1)
+    def pause(self):
+        app.resume_button.draw()
+        app.settings_button.draw()
+        app.exit_button.draw()
 
+    def settings(self):
+        pass
 
 
 class Button:
@@ -63,8 +79,6 @@ class Camera:
     def update(self, target):
         self.dx = -(target.rect.x + target.rect.w // 2 - WIDTH // 2)
         self.dy = -(target.rect.y + target.rect.h // 2 - HEIGHT // 2)
-
-
 
 
 class GameObject:
@@ -232,7 +246,6 @@ class AcceleratedObject(VelocityObject):
             else:
                 self.animation.frame_duration = 500 * (1 / self.speed.magnitude)
 
-
         """
         В данном случае self 0.90 это коэффициент сопротивления воздуха, чтобы
         сущность не разгонялась до бесконечности, вынести в константу бы
@@ -271,6 +284,7 @@ class AcceleratedObject(VelocityObject):
                         self.speed = Speed(self.speed.magnitude,
                                            Vector(0, self.speed.direction.y))
 
+
 class Player(AcceleratedObject):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -290,6 +304,7 @@ class Player(AcceleratedObject):
             self.sprite = pygame.transform.flip(self.sprite, True, False)
 
         screen.blit(self.sprite, (self.x, self.y))
+
 
 class Enemy(AcceleratedObject):
     def __init__(self, *args, **kwargs):
@@ -315,25 +330,27 @@ if __name__ == "__main__":
     screen_width = WIDTH
     screen_height = HEIGHT
     app = App()
-    app.music()
+    pygame.mixer.music.load('../../assets/menuLoop.mp3')
+    pygame.mixer.music.play(-1)
     screen = pygame.display.set_mode((screen_width, screen_height))
     pygame.display.set_caption("GameObject Example")
 
     game_object_animation = Animation(
-                            [f'../../assets/adventurer-run2-0{i + 1}.png' for i in
-                             range(5)], 100)
+        [f'../../assets/adventurer-run2-0{i + 1}.png' for i in
+         range(5)], 100)
 
     game_object = Player(100, 100, 100, 100,
-                        sprite_path="../../assets/adventurer-idle-00.png",
-                        a0=Acceleration(1,
-                                        Vector.unit_from_angle(
-                                            90)), animation=game_object_animation)
+                         sprite_path="../../assets/adventurer-idle-00.png",
+                         a0=Acceleration(1,
+                                         Vector.unit_from_angle(
+                                             90)), animation=game_object_animation)
 
     surface = GameObject(0, 200, 1000, 1000)
     running = True
     clock = pygame.time.Clock()
     flag = True
     game_started = False
+    is_paused = False
 
     while running:
         keys = pygame.key.get_pressed()
@@ -342,46 +359,61 @@ if __name__ == "__main__":
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.play_button.is_hovered:
                 game_started = True
+                is_paused = False
                 pygame.mixer.music.stop()
+                app.is_menu_music = False
                 pygame.mixer.music.load('../../assets/stage1.mp3')
                 pygame.mixer.music.play(-1)
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.resume_button.is_hovered:
+                is_paused = not is_paused
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.exit_button.is_hovered:
+                game_started = False
             if event.type == pygame.MOUSEMOTION:
                 app.play_button.check_hover(event.pos)
-
+                app.resume_button.check_hover(event.pos)
+                app.exit_button.check_hover(event.pos)
+                app.settings_button.check_hover(event.pos)
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                is_paused = not is_paused
 
         if game_started:
             screen.fill((0, 0, 0))
-            if keys[pygame.K_SPACE]:
-                if flag:
-                    flag = False
-                    game_object.speed = game_object.speed + Speed(12,
+            if not is_paused:
+                if keys[pygame.K_SPACE]:
+                    if flag:
+                        flag = False
+                        game_object.speed = game_object.speed + Speed(12,
+                                                                      Vector.unit_from_angle(
+                                                                          270))
+                else:
+                    flag = True
+
+                if keys[pygame.K_RIGHT]:
+                    game_object.speed = game_object.speed + Speed(0.6,
                                                                   Vector.unit_from_angle(
-                                                                      270))
+                                                                      0))
+                    game_object.target_orientation = 'right'
+
+                if keys[pygame.K_LEFT]:
+                    game_object.speed = game_object.speed + Speed(0.6,
+                                                                  Vector.unit_from_angle(
+                                                                      180))
+                    game_object.target_orientation = 'left'
+
+                game_object.resolve_collision(surface)
+                game_object.draw(screen)
+                surface.draw(screen)
+                game_object.move()
+                camera.update(game_object)
             else:
-                flag = True
-
-            if keys[pygame.K_RIGHT]:
-                game_object.speed = game_object.speed + Speed(0.6,
-                                                              Vector.unit_from_angle(
-                                                                  0))
-                game_object.target_orientation = 'right'
-
-            if keys[pygame.K_LEFT]:
-                game_object.speed = game_object.speed + Speed(0.6,
-                                                              Vector.unit_from_angle(
-                                                                  180))
-                game_object.target_orientation = 'left'
-
-            game_object.resolve_collision(surface)
-            game_object.draw(screen)
-            surface.draw(screen)
-            game_object.move()
-            camera.update(game_object)
+                game_object.resolve_collision(surface)
+                game_object.draw(screen)
+                surface.draw(screen)
+                camera.update(game_object)
+                app.pause()
 
         else:
             app.start_screen()
-            app.play_button.draw()
-
 
         pygame.display.flip()
         clock.tick(60)
