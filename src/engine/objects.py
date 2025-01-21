@@ -8,16 +8,17 @@ from commons import *
 class App:
     def __init__(self):
         self.menu_sprites = pygame.sprite.Group()
-        self.play_button = Button(310, 275, 160, 85, 'Play', '../../assets/Default.png')
-        self.background_sprite = pygame.image.load('../../assets/Splash_9_0.png')
-        self.logo_sprite = pygame.image.load('../../assets/Logo.png')
+        self.play_button = Button(50, 275, 160, 85, 'Play', '../../assets/Default.png')
+        self.background_sprite = pygame.transform.scale(pygame.image.load('../../assets/menu_background.jpg'), (800, 600))
+        self.logo_sprite = pygame.transform.scale(pygame.image.load('../../assets/Logo.png'), (1835 // 3, 751 // 3))
 
     def start_screen(self):
         screen.blit(self.background_sprite, (0, 0))
-        screen.blit(self.logo_sprite, (150, 50))
+
+        screen.blit(self.logo_sprite, (0, 0))
 
     def music(self):
-        pygame.mixer.music.load('../../assets/menu1.mp3')
+        pygame.mixer.music.load('../../assets/menuLoop.mp3')
         pygame.mixer.music.play(-1)
 
 
@@ -49,6 +50,19 @@ class Button:
     def check_hover(self, pos):
         self.is_hovered = self.rect.collidepoint(pos)
 
+
+class Camera:
+    def __init__(self):
+        self.dx = 0
+        self.dy = 0
+
+    def apply(self, obj):
+        obj.rect.x += self.dx
+        obj.rect.y += self.dy
+
+    def update(self, target):
+        self.dx = -(target.rect.x + target.rect.w // 2 - WIDTH // 2)
+        self.dy = -(target.rect.y + target.rect.h // 2 - HEIGHT // 2)
 
 
 
@@ -281,6 +295,7 @@ class Enemy(AcceleratedObject):
 if __name__ == "__main__":
     pygame.init()
 
+    camera = Camera()
     screen_width = WIDTH
     screen_height = HEIGHT
     app = App()
@@ -288,7 +303,7 @@ if __name__ == "__main__":
     screen = pygame.display.set_mode((screen_width, screen_height))
     pygame.display.set_caption("GameObject Example")
 
-    game_object_animation = Animation(
+    """game_object_animation = Animation(
                             [f'../../assets/merchant_{i}.png' for i in
                              range(10)], 80)
 
@@ -297,7 +312,7 @@ if __name__ == "__main__":
                         a0=Acceleration(1,
                                         Vector.unit_from_angle(
                                             90)),
-                        animation=game_object_animation)
+                        animation=game_object_animation)"""
 
     surface = GameObject(0, 200, 1000, 1000)
     running = True
@@ -321,7 +336,7 @@ if __name__ == "__main__":
 
         if game_started:
 
-            if keys[pygame.K_SPACE]:
+            """if keys[pygame.K_SPACE]:
                 if flag:
                     flag = False
                     game_object.speed = game_object.speed + Speed(12,
@@ -347,6 +362,8 @@ if __name__ == "__main__":
             game_object.draw(screen)
             surface.draw(screen)
             game_object.move()
+            camera.update(game_object)"""
+            pass
 
         else:
             app.start_screen()
