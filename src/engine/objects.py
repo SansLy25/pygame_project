@@ -304,15 +304,14 @@ if __name__ == "__main__":
     pygame.display.set_caption("GameObject Example")
 
     """game_object_animation = Animation(
-                            [f'../../assets/merchant_{i}.png' for i in
-                             range(10)], 80)
+                            [f'../../assets/adventurer-run2-0{i + 1}.png' for i in
+                             range(5)], 100)
 
     game_object = Enemy(100, 100, 100, 100,
-                        sprite_path="../../assets/sprite.png",
+                        sprite_path="../../assets/adventurer-idle-00.png",
                         a0=Acceleration(1,
                                         Vector.unit_from_angle(
-                                            90)),
-                        animation=game_object_animation)"""
+                                            90)))"""
 
     surface = GameObject(0, 200, 1000, 1000)
     running = True
@@ -328,7 +327,7 @@ if __name__ == "__main__":
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.play_button.is_hovered:
                 game_started = True
                 pygame.mixer.music.stop()
-                pygame.mixer.music.load('../../assets/day_music.mp3')
+                pygame.mixer.music.load('../../assets/stage1.mp3')
                 pygame.mixer.music.play(-1)
             if event.type == pygame.MOUSEMOTION:
                 app.play_button.check_hover(event.pos)
@@ -363,7 +362,7 @@ if __name__ == "__main__":
             surface.draw(screen)
             game_object.move()
             camera.update(game_object)"""
-            pass
+            screen.fill((0, 0, 0))
 
         else:
             app.start_screen()
