@@ -7,7 +7,7 @@ import os
 
 
 """
-Блок, из которого состоит подземелие
+Блок, из которого состоит подземелье
 """
 class Tile(pygame.sprite.Sprite):
     def __init__(self, app, tile_type, pos_x, pos_y):
@@ -23,7 +23,7 @@ class Tile(pygame.sprite.Sprite):
 
 
 """
-Комната подземелия
+Комната подземелья
 У каждой комнаты есть её план, который находитя по пути ./rooms (От корня проекта)
 План - текстовый файл с тремя типами символов:
 . - Пустота
@@ -132,7 +132,8 @@ class App: # TODO: Вынести App в отдельный файл
         while i > 0:
             if self.lonely_doors == []:
                 break
-            if self.generate_room(random.choice(os.listdir("../../rooms")), random.choice(self.lonely_doors)): # TODO: починить генерацию
+            if self.generate_room(random.choice(os.listdir("../../rooms")), random.choice(self.lonely_doors)): 
+                # TODO: починить генерацию и придумать проверку на сталкивания комнат
                 i -= 1
 
 
