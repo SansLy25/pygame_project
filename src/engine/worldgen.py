@@ -1,46 +1,208 @@
-import random
+from errors import IllegalDoorError, DoorNotFoundError
+
+import pygame
+import sys
+import os
 
 
-class PerlinNoise():
+"""
+Блок, из которого состоит подземелие
+"""
+class Tile(pygame.sprite.Sprite):
+    def __init__(self, app, tile_type, pos_x, pos_y):
+        pygame.sprite.Sprite.__init__(self)
+
+        tile_images = {
+            'wall': app.load_image('box.png'),
+            'empty': app.load_image('grass.png')
+        }
+
+        self.image = tile_images[tile_type]
+        self.rect = self.image.get_rect().move(pos_x, pos_y)
+
+
+"""
+Комната подземелия
+У каждой комнаты есть её план, который находитя по пути ./rooms (От корня проекта)
+План - текстовый файл с тремя типами символов:
+. - Пустота
+# - Стена
+D - Дверь (Соеденение между комнатами)
+Дверь может находиться только на краю комнаты
+На каждой стороне комнаты может быть только одна дверь
+"""
+class Room:
+    def __init__(self, filename, x, y):
+        self.room_group = pygame.sprite.Group()
+        self.tile_width = self.tile_height = 50
+
+        self.x = x
+        self.y = y
+
+        self.layout, self.doors = self.load_room(filename)
+
+    def load_image(self, name, colorkey=None):
+        fullname = os.path.join('../../assets/', name)
+        # если файл не существует, то выходим
+        if not os.path.isfile(fullname):
+            sys.exit()
+            raise FileNotFoundError(f"Файл с изображением '{fullname}' не найден")
+        image = pygame.image.load(fullname)
+        if colorkey is not None:
+            image = image.convert()
+            if colorkey == -1:
+                colorkey = image.get_at((0, 0))
+            image.set_colorkey(colorkey)
+        else:
+            image = image.convert_alpha()
+        return image
+    
     """
-    Одномерный генератор шума Перлина
+    Загружает комнату
+    Возращает план в виде матрицы и двери в виде матрицы (x, y, Сторона двери)
     """
-    def __init__(self, seed, amplitude=1, frequency=1, octaves=1):
-        self.seed = random.Random(seed).random()
-        self.amplitude = amplitude
-        self.frequency = frequency
-        self.octaves = octaves
+    def load_room(self, filename):
+        doors = []
 
-        self.mem_x = dict()
+        filename = "../../rooms/" + filename
+        # читаем уровень, убирая символы перевода строки
+        with open(filename, 'r') as mapFile:
+            level_map = [line.strip() for line in mapFile]
+
+        # и подсчитываем максимальную длину
+        max_width = max(map(len, level_map))
+
+        # дополняем каждую строку пустыми клетками ('.')
+        layout = list(map(lambda x: x.ljust(max_width, '.'), level_map))
+
+        # Если дверь находится по углам (Не достигаемое расположение), возращаем ошибку
+        if 'D' in [layout[0][0], layout[0][-1], layout[-1][0], layout[0][-1]]:
+            raise IllegalDoorError
+
+        for y in range(len(layout)):
+            for x in range(len(layout[y])):
+                if layout[y][x] == 'D':
+                    # Если дверь находится в центре комнаты, возращаем ошибку
+                    if layout[y][-1] != 'D' and layout[y][0] != 'D' and y != 0 and y != len(layout[y]) - 1:
+                        raise IllegalDoorError
+                    if layout[y][0] == 'D':
+                        doors.append((x * self.tile_width + self.x, y * self.tile_height + self.y, "W"))
+                    elif layout[y][-1] == 'D':
+                        doors.append((x * self.tile_width + self.x, y * self.tile_height + self.y, "E"))
+                    elif layout[0][x] == 'D':
+                        doors.append((x * self.tile_width + self.x, y * self.tile_height + self.y, "N"))
+                    elif layout[-1][0] == 'D':
+                        doors.append((x * self.tile_width + self.x, y * self.tile_height + self.y, "S"))
+                    
+        return layout, doors
+
+    """
+    Генерирует комнату из плана self.layout
+    Все спрайты комнаты находятся в группе self.room_group
+    """
+    def generate_room(self):
+        for y in range(len(self.layout)):
+            for x in range(len(self.layout[y])):
+                if self.layout[y][x] == '.':
+                    Tile(self,'empty', x * self.tile_width + self.x, y * self.tile_height + self.y)
+                elif self.layout[y][x] == '#':
+                    self.room_group.add(Tile(self,'wall', x * self.tile_width + self.x, y * self.tile_height + self.y))
+                elif self.layout[y][x] == '@':
+                    Tile(self, 'empty', x * self.tile_width + self.x, y * self.tile_height + self.y)
+
+class App:
+    def __init__(self):
+        pygame.init()
+        self.width, self.height = 2000, 900
+        self.tile_width = self.tile_height = 50 # TODO: Добавить единую длину/ширину клетки
+        self.clock = pygame.time.Clock()
+        self.screen = pygame.display.set_mode((self.width, self.height))
+        pygame.display.set_caption('Pygame Rougelike')
+
+        # self.rooms - Все группы спрайтов комнат в мире
+        self.rooms = [Room("room_start", 10, 500)]
+        # Загрузка первой комнаты (в которой находится игрок)
+        self.rooms[0].generate_room()
+
+        # Двери, не присоеденённые к комнате
+        self.lonely_doors = [*self.rooms[0].doors]
+
+        # Кандидат на загрузку в мир
+        cand = self.scan_room("room_1")
+        for i in range(len(cand[1])):
+            if cand[1][i][2] == 'W': # TODO: Добавить определение сторон двери
+                for v in self.lonely_doors:
+                    if v[2] == "E":
+                        cand_room = Room("room_1", v[0] + self.tile_width, v[1] - cand[1][i][1] * self.tile_width)
+                        self.rooms.append(cand_room)
+                        cand_room.generate_room()
+                        self.lonely_doors.pop(0)
+                        cand_room.doors.pop(i)    
+                        self.lonely_doors.append(*cand_room.doors)
+
+        print(self.lonely_doors)
 
 
-    def __noise(self, x):
-        if x not in self.mem_x:
-            self.mem_x[x] = random.Random(self.seed + x).uniform(-1, 1)
-        return self.mem_x[x]
+        self.fps = 50
+
+    def terminate(self):
+        pygame.quit()
+        sys.exit()
+
+    """
+    Сканирует комнату
+    Возращает длину и ширину комнаты и двери в виде матрицы (x, y, Сторона двери)
+    """
+    def scan_room(self, filename):
+        doors = []
+
+        filename = "../../rooms/" + filename
+        # читаем уровень, убирая символы перевода строки
+        with open(filename, 'r') as mapFile:
+            level_map = [line.strip() for line in mapFile]
+
+        # и подсчитываем максимальную длину
+        max_width = max(map(len, level_map))
+
+        # дополняем каждую строку пустыми клетками ('.')
+        layout = list(map(lambda x: x.ljust(max_width, '.'), level_map))
+
+        if 'D' in [layout[0][0], layout[0][-1], layout[-1][0], layout[0][-1]]:
+            raise IllegalDoorError
+
+        for y in range(len(layout)):
+            for x in range(len(layout[y])):
+                if layout[y][x] == 'D':
+                    if layout[y][-1] != 'D' and layout[y][0] != 'D' and y != 0 and y != len(layout[y]) - 1:
+                        raise IllegalDoorError
+                    if layout[y][0] == 'D':
+                        doors.append((x, y, "W"))
+                    elif layout[y][-1] == 'D':
+                        doors.append((x, y, "E"))
+                    elif layout[0][x] == 'D':
+                        doors.append((x, y, "N"))
+                    elif layout[-1][0] == 'D':
+                        doors.append((x, y, "S"))
+                    
+        return (len(layout[y]), len(layout)), doors        
+
+    def run_game(self):
+        run = True
+
+        while run:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.terminate()
+
+            self.screen.fill(pygame.Color('blue'))
+
+            for room in self.rooms:
+                room.room_group.draw(self.screen)
+
+            pygame.display.flip()
+            self.clock.tick(self.fps)
 
 
-    def __interpolated_noise(self, x):
-        prev_x = int(x)
-        next_x = prev_x + 1
-        frac_x = x - prev_x 
-
-        res = self.__linear_interp(self.__noise(prev_x), self.__noise(next_x), frac_x)
-
-        return res
-
-
-    def get(self, x):
-        frequency = self.frequency
-        amplitude = self.amplitude
-        result = 0
-        for _ in range(self.octaves):
-            result += self.__interpolated_noise(x * frequency) * amplitude
-            frequency *= 2
-            amplitude /= 2
-
-        return result
-
-
-    def __linear_interp(self, a, b, x):
-        return a + x * (b - a)
+if __name__ == '__main__':
+    app = App()
+    app.run_game()
