@@ -1,3 +1,4 @@
+import random
 from errors import IllegalDoorError, DoorNotFoundError
 
 import pygame
@@ -79,20 +80,20 @@ class Room:
         if 'D' in [layout[0][0], layout[0][-1], layout[-1][0], layout[0][-1]]:
             raise IllegalDoorError
 
-        for y in range(len(layout)):
-            for x in range(len(layout[y])):
-                if layout[y][x] == 'D':
+        if "D" in layout[0]:
+            doors.append((layout.index("D") * self.tile_width + self.x, y * self.tile_height + self.y, "N"))
+        if "D" in layout[-1]:
+            doors.append((layout.index("D") * self.tile_width + self.x, y * self.tile_height + self.y, "S"))
+
+        for y in range(1, len(layout)-1):
+                if 'D' in layout[y]:
                     # Если дверь находится в центре комнаты, возращаем ошибку
-                    if layout[y][-1] != 'D' and layout[y][0] != 'D' and y != 0 and y != len(layout[y]) - 1:
+                    if layout[y][-1] != 'D' and layout[y][0] != 'D':
                         raise IllegalDoorError
                     if layout[y][0] == 'D':
-                        doors.append((x * self.tile_width + self.x, y * self.tile_height + self.y, "W"))
-                    elif layout[y][-1] == 'D':
-                        doors.append((x * self.tile_width + self.x, y * self.tile_height + self.y, "E"))
-                    elif layout[0][x] == 'D':
-                        doors.append((x * self.tile_width + self.x, y * self.tile_height + self.y, "N"))
-                    elif layout[-1][0] == 'D':
-                        doors.append((x * self.tile_width + self.x, y * self.tile_height + self.y, "S"))
+                        doors.append((self.x, y * self.tile_height + self.y, "W"))
+                    if layout[y][-1] == 'D':
+                        doors.append((len(layout[y]) * self.tile_width + self.x, y * self.tile_height + self.y, "E"))
                     
         return layout, doors
 
@@ -110,7 +111,7 @@ class Room:
                 elif self.layout[y][x] == '@':
                     Tile(self, 'empty', x * self.tile_width + self.x, y * self.tile_height + self.y)
 
-class App:
+class App: # TODO: Вынести App в отдельный файл
     def __init__(self):
         pygame.init()
         self.width, self.height = 2000, 900
@@ -119,28 +120,20 @@ class App:
         self.screen = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption('Pygame Rougelike')
 
-        # self.rooms - Все группы спрайтов комнат в мире
+        # self.rooms - Все комнаты в мире
         self.rooms = [Room("room_start", 10, 500)]
         # Загрузка первой комнаты (в которой находится игрок)
         self.rooms[0].generate_room()
 
         # Двери, не присоеденённые к комнате
         self.lonely_doors = [*self.rooms[0].doors]
-
-        # Кандидат на загрузку в мир
-        cand = self.scan_room("room_1")
-        for i in range(len(cand[1])):
-            if cand[1][i][2] == 'W': # TODO: Добавить определение сторон двери
-                for v in self.lonely_doors:
-                    if v[2] == "E":
-                        cand_room = Room("room_1", v[0] + self.tile_width, v[1] - cand[1][i][1] * self.tile_width)
-                        self.rooms.append(cand_room)
-                        cand_room.generate_room()
-                        self.lonely_doors.pop(0)
-                        cand_room.doors.pop(i)    
-                        self.lonely_doors.append(*cand_room.doors)
-
-        print(self.lonely_doors)
+        self.generate_room("room_2", random.choice(self.lonely_doors))
+        # i = 10
+        # while i > 0:
+        #     if self.lonely_doors == []:
+        #         break
+        #     if self.generate_room(random.choice(os.listdir("../../rooms")), random.choice(self.lonely_doors)):
+        #         i -= 1
 
 
         self.fps = 50
@@ -148,6 +141,25 @@ class App:
     def terminate(self):
         pygame.quit()
         sys.exit()
+
+    def generate_room(self, room, door):
+        # Кандидат на загрузку в мир
+        cand = self.scan_room(room)
+        print(cand)
+        for i in range(len(cand[1])):
+            if (cand[1][i][2] == 'W' and door[2] == 'E' or 
+                cand[1][i][2] == 'E' and door[2] == 'W' or 
+                cand[1][i][2] == 'N' and door[2] == 'S' or 
+                cand[1][i][2] == 'S' and door[2] == 'N'):
+                    cand_room = Room(room, door[0] + self.tile_width, door[1] - cand[1][i][1] * self.tile_width)
+                    self.rooms.append(cand_room)
+                    cand_room.generate_room()
+                    self.lonely_doors.pop(0)
+                    cand_room.doors.pop(i)  
+                    self.lonely_doors += cand_room.doors
+                    return True
+            else:
+                return False
 
     """
     Сканирует комнату
@@ -170,19 +182,20 @@ class App:
         if 'D' in [layout[0][0], layout[0][-1], layout[-1][0], layout[0][-1]]:
             raise IllegalDoorError
 
-        for y in range(len(layout)):
-            for x in range(len(layout[y])):
-                if layout[y][x] == 'D':
-                    if layout[y][-1] != 'D' and layout[y][0] != 'D' and y != 0 and y != len(layout[y]) - 1:
+        if "D" in layout[0]:
+            doors.append((layout[0].index("D"), 0, "N"))
+        if "D" in layout[-1]:
+            doors.append((layout[-1].index("D"), len(layout) - 1, "S"))
+
+        for y in range(1, len(layout)-1):
+                if 'D' in layout[y]:
+                    # Если дверь находится в центре комнаты, возращаем ошибку
+                    if layout[y][-1] != 'D' and layout[y][0] != 'D':
                         raise IllegalDoorError
                     if layout[y][0] == 'D':
-                        doors.append((x, y, "W"))
-                    elif layout[y][-1] == 'D':
-                        doors.append((x, y, "E"))
-                    elif layout[0][x] == 'D':
-                        doors.append((x, y, "N"))
-                    elif layout[-1][0] == 'D':
-                        doors.append((x, y, "S"))
+                        doors.append((0, y, "W"))
+                    if layout[y][-1] == 'D':
+                        doors.append((len(layout[y]), y, "E"))
                     
         return (len(layout[y]), len(layout)), doors        
 
