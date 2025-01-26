@@ -81,9 +81,9 @@ class Room:
             raise IllegalDoorError
 
         if "D" in layout[0]:
-            doors.append((layout.index("D") * self.tile_width + self.x, y * self.tile_height + self.y, "N"))
+            doors.append((layout[0].index("D") * self.tile_width + self.x, self.y, "N"))
         if "D" in layout[-1]:
-            doors.append((layout.index("D") * self.tile_width + self.x, y * self.tile_height + self.y, "S"))
+            doors.append((layout[-1].index("D") * self.tile_width + self.x, (len(layout) - 1) * self.tile_height + self.y, "S"))
 
         for y in range(1, len(layout)-1):
                 if 'D' in layout[y]:
@@ -127,13 +127,13 @@ class App: # TODO: Вынести App в отдельный файл
 
         # Двери, не присоеденённые к комнате
         self.lonely_doors = [*self.rooms[0].doors]
-        self.generate_room("room_2", random.choice(self.lonely_doors))
-        # i = 10
-        # while i > 0:
-        #     if self.lonely_doors == []:
-        #         break
-        #     if self.generate_room(random.choice(os.listdir("../../rooms")), random.choice(self.lonely_doors)):
-        #         i -= 1
+
+        i = 10
+        while i > 0:
+            if self.lonely_doors == []:
+                break
+            if self.generate_room(random.choice(os.listdir("../../rooms")), random.choice(self.lonely_doors)): # TODO: починить генерацию
+                i -= 1
 
 
         self.fps = 50
@@ -144,8 +144,8 @@ class App: # TODO: Вынести App в отдельный файл
 
     def generate_room(self, room, door):
         # Кандидат на загрузку в мир
+        flag = False
         cand = self.scan_room(room)
-        print(cand)
         for i in range(len(cand[1])):
             if (cand[1][i][2] == 'W' and door[2] == 'E' or 
                 cand[1][i][2] == 'E' and door[2] == 'W' or 
@@ -157,9 +157,8 @@ class App: # TODO: Вынести App в отдельный файл
                     self.lonely_doors.pop(0)
                     cand_room.doors.pop(i)  
                     self.lonely_doors += cand_room.doors
-                    return True
-            else:
-                return False
+                    flag = True
+        return flag
 
     """
     Сканирует комнату
