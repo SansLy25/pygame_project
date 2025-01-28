@@ -3,6 +3,68 @@ from vectors import Speed, Acceleration
 from pygame import Rect
 from animation import Animation
 import pygame
+from commons import *
+
+class App:
+    def __init__(self):
+        self.menu_sprites = pygame.sprite.Group()
+        self.play_button = Button(50, 275, 160, 85, 'Play', '../../assets/Default.png')
+        self.background_sprite = pygame.transform.scale(pygame.image.load('../../assets/menu_background.jpg'), (800, 600))
+        self.logo_sprite = pygame.transform.scale(pygame.image.load('../../assets/Logo.png'), (1835 // 3, 751 // 3))
+
+    def start_screen(self):
+        screen.blit(self.background_sprite, (0, 0))
+
+        screen.blit(self.logo_sprite, (0, 0))
+
+    def music(self):
+        pygame.mixer.music.load('../../assets/menuLoop.mp3')
+        pygame.mixer.music.play(-1)
+
+
+
+class Button:
+    def __init__(self, x, y, width, height, text, image_path):
+        self.x = x
+        self.y = y
+
+        self.width = width
+        self.height = height
+
+        self.text = text
+
+        self.image = pygame.image.load(image_path)
+        self.image = pygame.transform.scale(self.image, (width, height))
+        self.rect = self.image.get_rect(topleft=(x, y))
+        self.is_hovered = False
+
+    def draw(self):
+        current_image = self.image
+        screen.blit(current_image, self.rect.topleft)
+
+        font = pygame.font.Font(None, 36)
+        text_surface = font.render(self.text, True, (255, 255, 255))
+        text_rect = text_surface.get_rect(center=self.rect.center)
+        screen.blit(text_surface, text_rect)
+
+    def check_hover(self, pos):
+        self.is_hovered = self.rect.collidepoint(pos)
+
+
+class Camera:
+    def __init__(self):
+        self.dx = 0
+        self.dy = 0
+
+    def apply(self, obj):
+        obj.rect.x += self.dx
+        obj.rect.y += self.dy
+
+    def update(self, target):
+        self.dx = -(target.rect.x + target.rect.w // 2 - WIDTH // 2)
+        self.dy = -(target.rect.y + target.rect.h // 2 - HEIGHT // 2)
+
+
 
 
 class GameObject:
@@ -233,59 +295,79 @@ class Enemy(AcceleratedObject):
 if __name__ == "__main__":
     pygame.init()
 
-    screen_width = 800
-    screen_height = 600
+    camera = Camera()
+    screen_width = WIDTH
+    screen_height = HEIGHT
+    app = App()
+    app.music()
     screen = pygame.display.set_mode((screen_width, screen_height))
     pygame.display.set_caption("GameObject Example")
 
-    game_object_animation = Animation(
-                            [f'../../assets/merchant_{i}.png' for i in
-                             range(10)], 80)
+    """game_object_animation = Animation(
+                            [f'../../assets/adventurer-run2-0{i + 1}.png' for i in
+                             range(5)], 100)
 
     game_object = Enemy(100, 100, 100, 100,
-                        sprite_path="../../assets/sprite.png",
+                        sprite_path="../../assets/adventurer-idle-00.png",
                         a0=Acceleration(1,
                                         Vector.unit_from_angle(
-                                            90)),
-                        animation=game_object_animation)
+                                            90)))"""
 
     surface = GameObject(0, 200, 1000, 1000)
     running = True
     clock = pygame.time.Clock()
     flag = True
+    game_started = False
 
     while running:
         keys = pygame.key.get_pressed()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.play_button.is_hovered:
+                game_started = True
+                pygame.mixer.music.stop()
+                pygame.mixer.music.load('../../assets/stage1.mp3')
+                pygame.mixer.music.play(-1)
+            if event.type == pygame.MOUSEMOTION:
+                app.play_button.check_hover(event.pos)
 
-        if keys[pygame.K_SPACE]:
-            if flag:
-                flag = False
-                game_object.speed = game_object.speed + Speed(12,
+
+        if game_started:
+
+            """if keys[pygame.K_SPACE]:
+                if flag:
+                    flag = False
+                    game_object.speed = game_object.speed + Speed(12,
+                                                                  Vector.unit_from_angle(
+                                                                      270))
+            else:
+                flag = True
+
+            if keys[pygame.K_RIGHT]:
+                game_object.speed = game_object.speed + Speed(0.6,
                                                               Vector.unit_from_angle(
-                                                                  270))
+                                                                  0))
+                game_object.target_orientation = 'right'
+
+            if keys[pygame.K_LEFT]:
+                game_object.speed = game_object.speed + Speed(0.6,
+                                                              Vector.unit_from_angle(
+                                                                  180))
+                game_object.target_orientation = 'left'
+
+            game_object.resolve_collision(surface)
+            screen.fill((0, 0, 0))
+            game_object.draw(screen)
+            surface.draw(screen)
+            game_object.move()
+            camera.update(game_object)"""
+            screen.fill((0, 0, 0))
+
         else:
-            flag = True
+            app.start_screen()
+            app.play_button.draw()
 
-        if keys[pygame.K_RIGHT]:
-            game_object.speed = game_object.speed + Speed(0.6,
-                                                          Vector.unit_from_angle(
-                                                              0))
-            game_object.target_orientation = 'right'
-
-        if keys[pygame.K_LEFT]:
-            game_object.speed = game_object.speed + Speed(0.6,
-                                                          Vector.unit_from_angle(
-                                                              180))
-            game_object.target_orientation = 'left'
-
-        game_object.resolve_collision(surface)
-        screen.fill((0, 0, 0))
-        game_object.draw(screen)
-        surface.draw(screen)
-        game_object.move()
 
         pygame.display.flip()
         clock.tick(60)
