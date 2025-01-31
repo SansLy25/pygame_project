@@ -271,6 +271,25 @@ class AcceleratedObject(VelocityObject):
                         self.speed = Speed(self.speed.magnitude,
                                            Vector(0, self.speed.direction.y))
 
+class Player(AcceleratedObject):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.orientation = 'right'
+        self.target_orientation = 'right'
+        self.hp = 100
+
+    def draw(self, screen):
+        if self.animation:
+            self.sprite = self.animation.get_current_frame()
+            self.animation.update()
+            if self.orientation == 'left':
+                self.sprite = pygame.transform.flip(self.sprite, True, False)
+
+        if self.target_orientation != self.orientation:
+            self.orientation = self.target_orientation
+            self.sprite = pygame.transform.flip(self.sprite, True, False)
+
+        screen.blit(self.sprite, (self.x, self.y))
 
 class Enemy(AcceleratedObject):
     def __init__(self, *args, **kwargs):
@@ -286,9 +305,6 @@ class Enemy(AcceleratedObject):
         if self.target_orientation != self.orientation:
             self.orientation = self.target_orientation
 
-        if self.orientation == 'right':
-            self.sprite = pygame.transform.flip(self.sprite, True, False)
-
         screen.blit(self.sprite, (self.x, self.y))
 
 
@@ -303,15 +319,15 @@ if __name__ == "__main__":
     screen = pygame.display.set_mode((screen_width, screen_height))
     pygame.display.set_caption("GameObject Example")
 
-    """game_object_animation = Animation(
+    game_object_animation = Animation(
                             [f'../../assets/adventurer-run2-0{i + 1}.png' for i in
                              range(5)], 100)
 
-    game_object = Enemy(100, 100, 100, 100,
+    game_object = Player(100, 100, 100, 100,
                         sprite_path="../../assets/adventurer-idle-00.png",
                         a0=Acceleration(1,
                                         Vector.unit_from_angle(
-                                            90)))"""
+                                            90)), animation=game_object_animation)
 
     surface = GameObject(0, 200, 1000, 1000)
     running = True
@@ -334,8 +350,8 @@ if __name__ == "__main__":
 
 
         if game_started:
-
-            """if keys[pygame.K_SPACE]:
+            screen.fill((0, 0, 0))
+            if keys[pygame.K_SPACE]:
                 if flag:
                     flag = False
                     game_object.speed = game_object.speed + Speed(12,
@@ -357,12 +373,10 @@ if __name__ == "__main__":
                 game_object.target_orientation = 'left'
 
             game_object.resolve_collision(surface)
-            screen.fill((0, 0, 0))
             game_object.draw(screen)
             surface.draw(screen)
             game_object.move()
-            camera.update(game_object)"""
-            screen.fill((0, 0, 0))
+            camera.update(game_object)
 
         else:
             app.start_screen()
