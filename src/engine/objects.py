@@ -12,6 +12,8 @@ from vectors import Vector
 class App:
     def __init__(self):
         self.is_menu_music = True
+        self.menu_music_volume = 100
+        self.sfx_volume = 100
         self.menu_sprites = pygame.sprite.Group()
         self.play_button = Button(50, 275, 160, 85, 'Play', '../../assets/Default.png')
         self.background_sprite = pygame.transform.scale(pygame.image.load('../../assets/menu_background.jpg'),
@@ -20,6 +22,7 @@ class App:
         self.settings_button = Button(300, 260, 200, 80, 'Settings', '../../assets/Default.png')
         self.exit_button = Button(300, 380, 200, 80, 'Exit', '../../assets/Default.png')
         self.logo_sprite = pygame.transform.scale(pygame.image.load('../../assets/Logo.png'), (1835 // 3, 751 // 3))
+        self.vol1_slider = Slider(100, 100, 200, 40, 0, 100, 1, start_value=self.menu_music_volume)
 
     def start_screen(self):
         if not self.is_menu_music:
@@ -35,8 +38,45 @@ class App:
         app.settings_button.draw()
         app.exit_button.draw()
 
-    def settings(self):
-        pass
+    def settings(self, events):
+        self.vol1_slider.draw()
+        self.vol1_slider.update(events)
+
+
+class Slider:
+    def __init__(self, x, y, width, height, min_value, max_value, step, start_value=None):
+        self.rect = pygame.Rect(x, y + height // 4, width, height // 2)
+        self.min_value = min_value
+        self.max_value = max_value
+        self.step = step
+        self.value = start_value if start_value is not None else min_value
+        self.handle_radius = height // 2
+        self.handle_pos = x + (self.value - min_value) / (max_value - min_value) * width
+        self.dragging = False
+
+    def draw(self):
+        pygame.draw.rect(screen, (200, 200, 200), self.rect)
+        pygame.draw.circle(screen, (0, 0, 255), (int(self.handle_pos), self.rect.centery), self.handle_radius)
+
+    def update(self, events):
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_x, mouse_y = event.pos
+                distance = math.sqrt((mouse_x - self.handle_pos) ** 2 + (mouse_y - self.rect.centery) ** 2)
+                if distance <= self.handle_radius:
+                    self.dragging = True
+            elif event.type == pygame.MOUSEBUTTONUP:
+                self.dragging = False
+            elif event.type == pygame.MOUSEMOTION and self.dragging:
+                self.handle_pos = max(self.rect.left, min(event.pos[0], self.rect.right))
+                self.value = self.min_value + (self.handle_pos - self.rect.left) / self.rect.width * (
+                            self.max_value - self.min_value)
+                self.value = round(self.value / self.step) * self.step
+                self.handle_pos = self.rect.left + (self.value - self.min_value) / (
+                            self.max_value - self.min_value) * self.rect.width
+
+    def get_value(self):
+        return self.value
 
 
 class Button:
