@@ -34,7 +34,8 @@ class App:
         self.vol1_slider = Slider(100, 210, 350, 20, 0, 100, 1, start_value=self.music_volume)
         self.vol2_slider = Slider(100, 310, 350, 20, 0, 100, 1, start_value=self.sfx_volume)
         self.back1_button = Button(300, 450, 200, 80, 'Back', '../../assets/Default.png')
-        self.settings_text1 = Text("Music volume", 36, 100, 100, 100, 100, (255, 255, 255))
+        self.settings_text1 = Text("Music volume", 36, 520, 170, 100, 100, (255, 255, 255))
+        self.settings_text2 = Text("SFX volume", 36, 510, 270, 100, 100, (255, 255, 255))
 
     def start_screen(self):
         if not self.is_menu_music:
@@ -53,6 +54,7 @@ class App:
     def settings(self):
         self.vol1_slider.update(events)
         self.settings_text1.draw()
+        self.settings_text2.draw()
         self.vol2_slider.update(events)
         self.vol1_slider.draw()
         self.vol2_slider.draw()
