@@ -9,10 +9,19 @@ from vectors import Speed, Acceleration
 from vectors import Vector
 
 
+def hover_check(event):
+    if event.type == pygame.MOUSEMOTION:
+        app.play_button.check_hover(event.pos)
+        app.resume_button.check_hover(event.pos)
+        app.exit_button.check_hover(event.pos)
+        app.settings_button.check_hover(event.pos)
+        app.back1_button.check_hover(event.pos)
+
+
 class App:
     def __init__(self):
         self.is_menu_music = True
-        self.menu_music_volume = 100
+        self.music_volume = 100
         self.sfx_volume = 100
         self.menu_sprites = pygame.sprite.Group()
         self.play_button = Button(50, 275, 160, 85, 'Play', '../../assets/Default.png')
@@ -22,7 +31,10 @@ class App:
         self.settings_button = Button(300, 260, 200, 80, 'Settings', '../../assets/Default.png')
         self.exit_button = Button(300, 380, 200, 80, 'Exit', '../../assets/Default.png')
         self.logo_sprite = pygame.transform.scale(pygame.image.load('../../assets/Logo.png'), (1835 // 3, 751 // 3))
-        self.vol1_slider = Slider(100, 100, 200, 40, 0, 100, 1, start_value=self.menu_music_volume)
+        self.vol1_slider = Slider(100, 210, 350, 20, 0, 100, 1, start_value=self.music_volume)
+        self.vol2_slider = Slider(100, 310, 350, 20, 0, 100, 1, start_value=self.sfx_volume)
+        self.back1_button = Button(300, 450, 200, 80, 'Back', '../../assets/Default.png')
+        self.settings_text1 = Text("Music volume", 36, 100, 100, 100, 100, (255, 255, 255))
 
     def start_screen(self):
         if not self.is_menu_music:
@@ -38,9 +50,39 @@ class App:
         app.settings_button.draw()
         app.exit_button.draw()
 
-    def settings(self, events):
-        self.vol1_slider.draw()
+    def settings(self):
         self.vol1_slider.update(events)
+        self.settings_text1.draw()
+        self.vol2_slider.update(events)
+        self.vol1_slider.draw()
+        self.vol2_slider.draw()
+        self.back1_button.draw()
+        self.music_volume = self.vol1_slider.get_value()
+        pygame.mixer.music.set_volume(self.music_volume / 100)
+        self.sfx_volume = self.vol2_slider.get_value()
+
+
+class Text:
+    def __init__(self, text, size, x, y, width, height, color, font=None):
+        self.text = text
+
+        self.size = size
+
+        self.x = x
+        self.y = y
+
+        self.color = color
+
+        self.widht = width
+        self.height = height
+
+        self.rect = Rect(self.x, self.y, self.widht, self.height)
+        self.font = pygame.font.Font(None, self.size)
+        self.text_surface = self.font.render(self.text, True, self.color)
+        self.text_rect = self.text_surface.get_rect(center=self.rect.center)
+
+    def draw(self):
+        screen.blit(self.text_surface, self.text_rect)
 
 
 class Slider:
@@ -56,7 +98,7 @@ class Slider:
 
     def draw(self):
         pygame.draw.rect(screen, (200, 200, 200), self.rect)
-        pygame.draw.circle(screen, (0, 0, 255), (int(self.handle_pos), self.rect.centery), self.handle_radius)
+        pygame.draw.circle(screen, (0, 255, 0), (int(self.handle_pos), self.rect.centery), self.handle_radius)
 
     def update(self, events):
         for event in events:
@@ -70,10 +112,10 @@ class Slider:
             elif event.type == pygame.MOUSEMOTION and self.dragging:
                 self.handle_pos = max(self.rect.left, min(event.pos[0], self.rect.right))
                 self.value = self.min_value + (self.handle_pos - self.rect.left) / self.rect.width * (
-                            self.max_value - self.min_value)
+                        self.max_value - self.min_value)
                 self.value = round(self.value / self.step) * self.step
                 self.handle_pos = self.rect.left + (self.value - self.min_value) / (
-                            self.max_value - self.min_value) * self.rect.width
+                        self.max_value - self.min_value) * self.rect.width
 
     def get_value(self):
         return self.value
@@ -105,20 +147,6 @@ class Button:
 
     def check_hover(self, pos):
         self.is_hovered = self.rect.collidepoint(pos)
-
-
-class Camera:
-    def __init__(self):
-        self.dx = 0
-        self.dy = 0
-
-    def apply(self, obj):
-        obj.rect.x += self.dx
-        obj.rect.y += self.dy
-
-    def update(self, target):
-        self.dx = -(target.rect.x + target.rect.w // 2 - WIDTH // 2)
-        self.dy = -(target.rect.y + target.rect.h // 2 - HEIGHT // 2)
 
 
 class GameObject:
@@ -366,7 +394,6 @@ class Enemy(AcceleratedObject):
 if __name__ == "__main__":
     pygame.init()
 
-    camera = Camera()
     screen_width = WIDTH
     screen_height = HEIGHT
     app = App()
@@ -391,30 +418,35 @@ if __name__ == "__main__":
     flag = True
     game_started = False
     is_paused = False
+    is_settings = False
 
     while running:
         keys = pygame.key.get_pressed()
-        for event in pygame.event.get():
+        events = pygame.event.get()
+        for event in events:
             if event.type == pygame.QUIT:
                 running = False
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.play_button.is_hovered:
+            if not game_started and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.play_button.is_hovered:
                 game_started = True
                 is_paused = False
                 pygame.mixer.music.stop()
                 app.is_menu_music = False
                 pygame.mixer.music.load('../../assets/stage1.mp3')
                 pygame.mixer.music.play(-1)
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.resume_button.is_hovered:
-                is_paused = not is_paused
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.exit_button.is_hovered:
-                game_started = False
-            if event.type == pygame.MOUSEMOTION:
-                app.play_button.check_hover(event.pos)
-                app.resume_button.check_hover(event.pos)
-                app.exit_button.check_hover(event.pos)
-                app.settings_button.check_hover(event.pos)
+            if not is_settings:
+                if is_paused and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.resume_button.is_hovered:
+                    is_paused = not is_paused
+                if is_paused and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.exit_button.is_hovered:
+                    game_started = False
+                if is_paused and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.settings_button.is_hovered:
+                    is_settings = True
+            else:
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.back1_button.is_hovered:
+                    is_settings = False
+            hover_check(event)
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 is_paused = not is_paused
+                is_settings = False
 
         if game_started:
             screen.fill((0, 0, 0))
@@ -444,13 +476,15 @@ if __name__ == "__main__":
                 game_object.draw(screen)
                 surface.draw(screen)
                 game_object.move()
-                camera.update(game_object)
             else:
-                game_object.resolve_collision(surface)
+                """game_object.resolve_collision(surface)
                 game_object.draw(screen)
                 surface.draw(screen)
-                camera.update(game_object)
-                app.pause()
+                camera.update(game_object)"""
+                if not is_settings:
+                    app.pause()
+                else:
+                    app.settings()
 
         else:
             app.start_screen()
