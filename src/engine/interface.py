@@ -92,6 +92,7 @@ class Button:
     def check_hover(self, pos):
         self.is_hovered = self.rect.collidepoint(pos)
 
+
 class ExperienceBar:
     def __init__(self, x, y, width, height, max_exp, screen):
         self.x = x
@@ -121,3 +122,38 @@ class ExperienceBar:
 
     def set_max(self, max_exp):
         self.max_exp = max_exp
+
+
+class UpgradeManager:
+    def __init__(self, screen):
+        self.screen = screen
+        self.hp_sprite = pygame.transform.scale(pygame.image.load('../assets/max_hp_icon.png'),
+                                                        (130, 90))
+        self.damage_sprite = pygame.transform.scale(pygame.image.load('../assets/attack_icon.png'),
+                                                (130, 90))
+        self.attack_speed_sprite = pygame.transform.scale(pygame.image.load('../assets/attack_speed_icon.png'),
+                                                (130, 90))
+        self.crit_sprite = pygame.transform.scale(pygame.image.load('../assets/crit_icon.png'),
+                                                (130, 90))
+        self.crit_chance_sprite = pygame.transform.scale(pygame.image.load('../assets/crit_chance_icon.png'),
+                                                (130, 90))
+        self.hp_button = Button(150, 80, 625, 90, 'Повышает максимальное здоровье на 100', '../assets/Default.png', self.screen)
+        self.damage_button = Button(150, 170, 625, 90, 'Повышает урон от атаки на 20%', '../assets/Default.png', self.screen)
+        self.attack_speed_button = Button(150, 260, 625, 90, 'Повышает скорость атаки на 0.5 единиц', '../assets/Default.png', self.screen)
+        self.crit_button = Button(150, 350, 625, 90, 'Повышает критический урон на 20%', '../assets/Default.png', self.screen)
+        self.crit_chance_button = Button(150, 440, 625, 90, 'Повышает шанс критического удара на 2%', '../assets/Default.png', self.screen)
+        self.cancel_button = Button(150, 540, 625, 50, 'Закрыть',
+                                        '../assets/Default.png', self.screen)
+
+    def draw(self):
+        self.hp_button.draw()
+        self.attack_speed_button.draw()
+        self.damage_button.draw()
+        self.crit_button.draw()
+        self.crit_chance_button.draw()
+        self.cancel_button.draw()
+        self.screen.blit(self.hp_sprite, (10, 80))
+        self.screen.blit(self.damage_sprite, (10, 170))
+        self.screen.blit(self.attack_speed_sprite, (10, 260))
+        self.screen.blit(self.crit_sprite, (10, 350))
+        self.screen.blit(self.crit_chance_sprite, (10, 440))
