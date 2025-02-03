@@ -91,3 +91,33 @@ class Button:
 
     def check_hover(self, pos):
         self.is_hovered = self.rect.collidepoint(pos)
+
+class ExperienceBar:
+    def __init__(self, x, y, width, height, max_exp, screen):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.max_exp = max_exp
+        self.current_exp = 0
+        self.screen = screen
+
+    def draw(self):
+        pygame.draw.rect(self.screen, (255, 255, 255), (self.x - 2, self.y - 2, self.width + 4, self.height + 4), 2)
+        pygame.draw.rect(self.screen, (0, 0, 0), (self.x, self.y, self.width, self.height))
+        fill_width = int((self.current_exp / self.max_exp) * self.width)
+        pygame.draw.rect(self.screen, (0, 255, 0), (self.x, self.y, fill_width, self.height))
+        font = pygame.font.Font(None, 25)
+        exp_text = f"{self.current_exp}/{self.max_exp}"
+        text_surface = font.render(exp_text, True, (255, 255, 255))
+        text_rect = text_surface.get_rect(center=(self.x + self.width // 2, self.y + self.height // 2))
+        self.screen.blit(text_surface, text_rect)
+
+    def set_exp(self, current_exp):
+        self.current_exp = current_exp
+
+    def add_exp(self, add_value):
+        self.current_exp += add_value
+
+    def set_max(self, max_exp):
+        self.max_exp = max_exp

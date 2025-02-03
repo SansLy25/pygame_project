@@ -5,7 +5,6 @@ from engine.animation import Animation
 from engine.vectors import Vector, Acceleration, Speed
 from engine.commons import WIDTH, HEIGHT
 
-
 def hover_check(event):
     if event.type == pygame.MOUSEMOTION:
         app.play_button.check_hover(event.pos)
