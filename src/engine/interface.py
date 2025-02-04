@@ -114,11 +114,12 @@ class ExperienceBar:
         text_rect = text_surface.get_rect(center=(self.x + self.width // 2, self.y + self.height // 2))
         self.screen.blit(text_surface, text_rect)
 
+    def update(self, current_exp, max_exp):
+        self.current_exp = current_exp
+        self.max_exp = max_exp
+
     def set_exp(self, current_exp):
         self.current_exp = current_exp
-
-    def add_exp(self, add_value):
-        self.current_exp += add_value
 
     def set_max(self, max_exp):
         self.max_exp = max_exp
@@ -128,22 +129,27 @@ class UpgradeManager:
     def __init__(self, screen):
         self.screen = screen
         self.hp_sprite = pygame.transform.scale(pygame.image.load('../assets/max_hp_icon.png'),
-                                                        (130, 90))
+                                                (130, 90))
         self.damage_sprite = pygame.transform.scale(pygame.image.load('../assets/attack_icon.png'),
-                                                (130, 90))
+                                                    (130, 90))
         self.attack_speed_sprite = pygame.transform.scale(pygame.image.load('../assets/attack_speed_icon.png'),
-                                                (130, 90))
+                                                          (130, 90))
         self.crit_sprite = pygame.transform.scale(pygame.image.load('../assets/crit_icon.png'),
-                                                (130, 90))
+                                                  (130, 90))
         self.crit_chance_sprite = pygame.transform.scale(pygame.image.load('../assets/crit_chance_icon.png'),
-                                                (130, 90))
-        self.hp_button = Button(150, 80, 625, 90, 'Повышает максимальное здоровье на 100', '../assets/Default.png', self.screen)
-        self.damage_button = Button(150, 170, 625, 90, 'Повышает урон от атаки на 20%', '../assets/Default.png', self.screen)
-        self.attack_speed_button = Button(150, 260, 625, 90, 'Повышает скорость атаки на 0.5 единиц', '../assets/Default.png', self.screen)
-        self.crit_button = Button(150, 350, 625, 90, 'Повышает критический урон на 20%', '../assets/Default.png', self.screen)
-        self.crit_chance_button = Button(150, 440, 625, 90, 'Повышает шанс критического удара на 2%', '../assets/Default.png', self.screen)
+                                                         (130, 90))
+        self.hp_button = Button(150, 80, 625, 90, 'Повышает максимальное здоровье на 100', '../assets/Default.png',
+                                self.screen)
+        self.damage_button = Button(150, 170, 625, 90, 'Повышает урон от атаки на 20%', '../assets/Default.png',
+                                    self.screen)
+        self.attack_speed_button = Button(150, 260, 625, 90, 'Повышает скорость атаки на 0.5 единиц',
+                                          '../assets/Default.png', self.screen)
+        self.crit_button = Button(150, 350, 625, 90, 'Повышает критический урон на 20%', '../assets/Default.png',
+                                  self.screen)
+        self.crit_chance_button = Button(150, 440, 625, 90, 'Повышает шанс критического удара на 2%',
+                                         '../assets/Default.png', self.screen)
         self.cancel_button = Button(150, 540, 625, 50, 'Закрыть',
-                                        '../assets/Default.png', self.screen)
+                                    '../assets/Default.png', self.screen)
 
     def draw(self):
         self.hp_button.draw()
@@ -157,3 +163,34 @@ class UpgradeManager:
         self.screen.blit(self.attack_speed_sprite, (10, 260))
         self.screen.blit(self.crit_sprite, (10, 350))
         self.screen.blit(self.crit_chance_sprite, (10, 440))
+
+
+class HealthBar:
+    def __init__(self, x, y, radius, max_hp, screen):
+        self.screen = screen
+        self.x = x
+        self.y = y
+        self.radius = radius
+        self.max_hp = max_hp
+        self.current_hp = max_hp
+
+    def draw(self):
+        font = pygame.font.Font(None, 36)
+        pygame.draw.circle(self.screen, (0, 0, 0), (self.x, self.y), self.radius)
+        angle = 360 * (self.current_hp / self.max_hp)
+        pygame.draw.arc(
+            self.screen,
+            (52, 201, 36),
+            (self.x - self.radius, self.y - self.radius, self.radius * 2, self.radius * 2),
+            math.radians(-90),
+            math.radians(-90 + angle),
+            int(self.radius * 0.2)
+        )
+        health_text = f"{self.current_hp}/{self.max_hp}"
+        text_surface = font.render(health_text, True, (255, 255, 255))
+        text_rect = text_surface.get_rect(center=(self.x, self.y))
+        self.screen.blit(text_surface, text_rect)
+
+    def update(self, current_hp, max_hp):
+        self.current_hp = current_hp
+        self.max_hp = max_hp
