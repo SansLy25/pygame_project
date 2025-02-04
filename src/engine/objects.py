@@ -1,9 +1,9 @@
 import pygame
+import math
 from pygame import Rect
 
 from .vectors import Speed, Acceleration
 from .vectors import Vector
-
 
 class GameObject:
     def __init__(self, x, y, width, height, sprite_path=None, animation=None):
@@ -233,8 +233,10 @@ class Player(AcceleratedObject):
 class Enemy(AcceleratedObject):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.player = None
         self.orientation = 'left'
         self.target_orientation = 'left'
+        self.vision_range = 100
 
     def draw(self, screen):
         if self.animation:
@@ -245,3 +247,15 @@ class Enemy(AcceleratedObject):
             self.orientation = self.target_orientation
 
         screen.blit(self.sprite, (self.x, self.y))
+
+    def set_target(self, player):
+        self.player = player
+
+    def move(self):
+        super().move()
+        distance_x = abs(self.player.x - self.x)
+        if distance_x <= self.vision_range:
+            if self.player.x < self.x:  # Игрок слева
+                self.speed = self.speed + Speed(0.6, Vector.unit_from_angle(180))
+            elif self.player.x > self.x:  # Игрок справа
+                self.speed = self.speed + Speed(0.6, Vector.unit_from_angle(0))

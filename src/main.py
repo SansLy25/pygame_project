@@ -1,9 +1,10 @@
 import pygame
-from engine.objects import Player, GameObject
+from engine.objects import Player, GameObject, Enemy
 from engine.app import App
 from engine.animation import Animation
 from engine.vectors import Vector, Acceleration, Speed
 from engine.commons import WIDTH, HEIGHT
+
 
 def hover_check(event):
     if event.type == pygame.MOUSEMOTION:
@@ -42,6 +43,10 @@ if __name__ == "__main__":
                                          Vector.unit_from_angle(
                                              90)),
                          animation=game_object_animation)
+
+    enemy = Enemy(500, 100, 100, 100, sprite_path="../assets/adventurer-idle-00.png",
+                  a0=Acceleration(1, Vector.unit_from_angle(90)))
+    enemy.set_target(game_object)
 
     surface = GameObject(0, 200, 1000, 1000)
     running = True
@@ -129,15 +134,14 @@ if __name__ == "__main__":
 
                     game_object.resolve_collision(surface)
                     game_object.draw(screen)
+                    enemy.resolve_collision(surface)
+                    enemy.draw(screen)
                     surface.draw(screen)
                     game_object.move()
+                    enemy.move()
                 elif app.is_lvlup:
                     app.upgrade_manager.draw()
             elif is_paused:
-                """game_object.resolve_collision(surface)
-                game_object.draw(screen)
-                surface.draw(screen)
-                camera.update(game_object)"""
                 if not is_settings:
                     app.pause()
                 else:

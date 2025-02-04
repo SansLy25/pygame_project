@@ -1,13 +1,14 @@
 import pygame
 
-from .interface import Button, Slider, Text, UpgradeManager
+from .interface import Button, Slider, Text, UpgradeManager, ExperienceBar
 
 
 class App:
     def __init__(self, screen):
         self.screen = screen
         self.is_menu_music = True
-        self.upgrade_manager = UpgradeManager(screen)
+        self.upgrade_manager = UpgradeManager(self.screen)
+        self.experience_bar = ExperienceBar(50, 50, 500, 50, 100, self.screen)
         self.upgrade_count = 0
         self.is_lvlup = False
         self.music_volume = 100
