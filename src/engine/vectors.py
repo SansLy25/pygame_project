@@ -65,10 +65,10 @@ class Speed:
         return self.direction.scale(self.magnitude)
 
     def get_x_projection(self):
-        return round(self.magnitude * self.direction.x, 4)
+        return self.magnitude * self.direction.x
 
     def get_y_projection(self):
-        return round(self.magnitude * self.direction.y, 4)
+        return self.magnitude * self.direction.y
 
     def __add__(self, other):
         """
@@ -81,7 +81,7 @@ class Speed:
         summ_vector = self.get_vector() + other.get_vector()
 
         magnitude = summ_vector.magnitude()
-        direction = summ_vector if magnitude == 0 else summ_vector.normalize()
+        direction = summ_vector.normalize()
         return Speed(magnitude, direction)
 
     def __mul__(self, other):

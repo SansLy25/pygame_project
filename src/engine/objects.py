@@ -51,13 +51,15 @@ class GameObject:
     @x.setter
     def x(self, x):
         params = self.__get_rect_params()
-        params[0] = x
+        if round(x, 0) != params[0]:
+            params[0] = x
         self.rect.update(*params)
 
     @y.setter
     def y(self, y):
         params = self.__get_rect_params()
-        params[1] = y
+        if round(y, 0) != params[0]:
+            params[0] = y
         self.rect.update(*params)
 
     @width.setter
@@ -182,7 +184,11 @@ class VelocityObject(GameObject):
         self.speed = v0
 
     def move(self):
-        self.x += self.speed.get_x_projection()
+        print('нач')
+        print(self.x)
+        self.x = self.x + self.speed.get_x_projection()
+        print(self.x, self.speed.get_x_projection())
+        print('кон')
         self.y += self.speed.get_y_projection()
 
 

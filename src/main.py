@@ -88,14 +88,12 @@ if __name__ == "__main__":
 
                 if keys[pygame.K_RIGHT]:
                     game_object.speed = game_object.speed + Speed(0.6,
-                                                                  Vector.unit_from_angle(
-                                                                      0))
+                                                                  Vector(1, 0))
                     game_object.target_orientation = 'right'
 
                 if keys[pygame.K_LEFT]:
                     game_object.speed = game_object.speed + Speed(0.6,
-                                                                  Vector.unit_from_angle(
-                                                                      180))
+                                                                  Vector(-1, 0))
                     game_object.target_orientation = 'left'
 
                 all_game_objects = GameObject.all_game_objects
@@ -111,7 +109,7 @@ if __name__ == "__main__":
             app.start_screen()
 
         pygame.display.flip()
-        clock.tick(60)
+        clock.tick(15)
 
     pygame.quit()
     
