@@ -1,3 +1,5 @@
+from traceback import print_tb
+
 import pygame
 from engine.objects import Player, GameObject
 from engine.app import App
@@ -28,11 +30,11 @@ if __name__ == "__main__":
     pygame.display.set_caption("GameObject Example")
 
     game_object_animation = Animation(
-        [f'../assets/adventurer-run2-0{i + 1}.png' for i in
-         range(5)], 100)
+        [f'../assets/adventurer-0{i}.png' for i in
+         range(1, 6)], 100)
 
-    game_object = Player(100, 100, 100, 100,
-                         sprite_path="../assets/adventurer-idle-00.png",
+    game_object = Player(0, -100, 100, 120,
+                         sprite_path="../assets/adventurer-00.png",
                          a0=Acceleration(1,
                                          Vector.unit_from_angle(
                                              90)),
@@ -98,15 +100,10 @@ if __name__ == "__main__":
                                                                       180))
                     game_object.target_orientation = 'left'
 
-                game_object.resolve_collision(surface)
-                game_object.draw(screen)
-                surface.draw(screen)
-                game_object.move()
+                all_game_objects = GameObject.all_game_objects
+                for object in all_game_objects:
+                    object.update(screen, [obj for obj in all_game_objects if obj != object])
             else:
-                """game_object.resolve_collision(surface)
-                game_object.draw(screen)
-                surface.draw(screen)
-                camera.update(game_object)"""
                 if not is_settings:
                     app.pause()
                 else:
