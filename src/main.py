@@ -4,6 +4,7 @@ from engine.app import App
 from engine.animation import Animation
 from engine.vectors import Vector, Acceleration, Speed
 from engine.commons import WIDTH, HEIGHT
+from src.engine.interface import ExperienceBar
 
 
 def hover_check(event):
@@ -69,6 +70,26 @@ if __name__ == "__main__":
             else:
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.back1_button.is_hovered:
                     is_settings = False
+            if app.is_lvlup: # меню улучшений
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.upgrade_manager.crit_button.is_hovered:
+                    game_object.crit_damage = game_object.crit_damage * 1.2
+                    app.is_lvlup = False
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.upgrade_manager.damage_button.is_hovered:
+                    game_object.damage = game_object.damage * 1.2
+                    app.is_lvlup = False
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.upgrade_manager.crit_chance_button.is_hovered:
+                    game_object.crit_chance = int(game_object.crit_chance * 1.02)
+                    app.is_lvlup = False
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.upgrade_manager.hp_button.is_hovered:
+                    game_object.max_hp += 100
+                    game_object.current_hp += 100
+                    app.is_lvlup = False
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.upgrade_manager.attack_speed_button.is_hovered:
+                    game_object.attack_speed += 0.5
+                    app.is_lvlup = False
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.upgrade_manager.cancel_button.is_hovered:
+                    app.is_lvlup = False
+										
             hover_check(event)
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 is_paused = not is_paused
@@ -77,31 +98,47 @@ if __name__ == "__main__":
         if game_started:
             screen.fill((0, 0, 0))
             if not is_paused:
-                if keys[pygame.K_SPACE]:
-                    if flag:
-                        flag = False
-                        game_object.speed = game_object.speed + Speed(12,
+                if not app.is_lvlup:
+                    if game_object.is_max_exp():
+                        app.is_lvlup = True
+                    if keys[pygame.K_j]:
+                        enemy.respawn()
+                    if mouse[0]:
+                        game_object.attack([enemy], tick_count)
+                    if keys[pygame.K_SPACE]:
+                        if flag:
+                            flag = False
+                            game_object.speed = game_object.speed + Speed(12,
+                                                                          Vector.unit_from_angle(
+                                                                              270))
+                    else:
+                        flag = True
+
+                    if keys[pygame.K_RIGHT]:
+                        game_object.speed = game_object.speed + Speed(0.6,
                                                                       Vector.unit_from_angle(
-                                                                          270))
-                else:
-                    flag = True
+                                                                          0))
+                        game_object.target_orientation = 'right'
 
-                if keys[pygame.K_RIGHT]:
-                    game_object.speed = game_object.speed + Speed(0.6,
-                                                                  Vector.unit_from_angle(
-                                                                      0))
-                    game_object.target_orientation = 'right'
+                    if keys[pygame.K_LEFT]:
+                        game_object.speed = game_object.speed + Speed(0.6,
+                                                                      Vector.unit_from_angle(
+                                                                          180))
+                        game_object.target_orientation = 'left'
 
-                if keys[pygame.K_LEFT]:
-                    game_object.speed = game_object.speed + Speed(0.6,
-                                                                  Vector.unit_from_angle(
-                                                                      180))
-                    game_object.target_orientation = 'left'
-
-                all_game_objects = GameObject.all_game_objects
-                for object in all_game_objects:
-                    object.update(screen, [obj for obj in all_game_objects if obj != object])
-            else:
+                    
+                    app.expbar.update(game_object.current_exp, game_object.max_exp)
+                    app.expbar.draw()
+                    app.hpbar.update(game_object.current_hp, game_object.max_hp)
+                    app.hpbar.draw()
+                    all_game_objects = GameObject.all_game_objects
+               			for object in all_game_objects:
+                    		object.update(screen, [obj for obj in all_game_objects if obj != object])
+												
+                elif app.is_lvlup:
+                    app.upgrade_manager.draw()
+												
+            elif is_paused:
                 if not is_settings:
                     app.pause()
                 else:

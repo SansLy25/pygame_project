@@ -1,5 +1,6 @@
 import pygame
 import math
+import random
 from pygame import Rect
 
 from .vectors import Speed, Acceleration
@@ -216,9 +217,16 @@ class Player(AcceleratedObject):
         super().__init__(*args, **kwargs)
         self.orientation = 'right'
         self.target_orientation = 'right'
-        self.hp = 100
+        self.current_hp = 100
+        self.max_hp = 100
+        self.lvl = 1
+        self.max_exp = 100
+        self.current_exp = 0
         self.attack_range = 100
+        self.damage = 25
         self.attack_speed = 1.5
+        self.crit_damage = 2
+        self.crit_chance = 1
         self.last_attack_time = 0
 
     def draw(self, screen):
@@ -249,7 +257,24 @@ class Player(AcceleratedObject):
             self.last_attack_time = current_time
             for i in enemies:
                 if i.is_can_be_attacked:
-                    i.destroy()
+                    if self.crit_chance != 0:
+                        if random.randint(1, 101) in range(1, self.crit_chance):
+                            print('crit')
+                            i.current_hp -= self.damage * self.crit_damage
+                        else:
+                            i.current_hp -= self.damage
+                    else:
+                        i.current_hp -= self.damage
+                    if i.hp_check():
+                        self.current_exp += 25
+
+
+    def is_max_exp(self):
+        if self.current_exp >= self.max_exp:
+            self.current_exp -= self.max_exp
+            self.max_exp = int(self.max_exp * 1.2)
+            self.lvl += 1
+            return True
 
 
 
@@ -258,6 +283,12 @@ class Enemy(AcceleratedObject):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.player = None
+        self.spawn_x = self.x
+        self.spawn_y = self.y
+        self.spawn_speed = self.speed
+        self.max_hp = 100
+        self.current_hp = self.max_hp
+        self.spawn_acceleration = self.acceleration
         self.orientation = 'left'
         self.target_orientation = 'left'
         self.vision_range = 100
@@ -281,36 +312,51 @@ class Enemy(AcceleratedObject):
         self.player = player
 
     def move(self):
-        super().move()
-        distance_x = abs(self.player.x - self.x)
-        if distance_x >= self.player.attack_range:
-            if distance_x <= self.vision_range:
-                self.is_following = True
-                if self.player.x < self.x:
-                    self.speed = self.speed + Speed(0.2, Vector.unit_from_angle(180))
-                elif self.player.x > self.x:
-                    self.speed = self.speed + Speed(0.2, Vector.unit_from_angle(0))
-            elif self.is_following:
-                distance_x = abs(self.player.x - self.x)
-                if distance_x <= self.max_vision_range:
+        if not self.destroyed:
+            super().move()
+            distance_x = abs(self.player.x - self.x)
+            if distance_x >= self.player.attack_range:
+                if distance_x <= self.vision_range:
+                    self.is_following = True
                     if self.player.x < self.x:
                         self.speed = self.speed + Speed(0.2, Vector.unit_from_angle(180))
                     elif self.player.x > self.x:
                         self.speed = self.speed + Speed(0.2, Vector.unit_from_angle(0))
-                else:
-                    self.is_following = False
+                elif self.is_following:
+                    distance_x = abs(self.player.x - self.x)
+                    if distance_x <= self.max_vision_range:
+                        if self.player.x < self.x:
+                            self.speed = self.speed + Speed(0.2, Vector.unit_from_angle(180))
+                        elif self.player.x > self.x:
+                            self.speed = self.speed + Speed(0.2, Vector.unit_from_angle(0))
+                    else:
+                        self.is_following = False
 
     def can_be_attacked(self):
-        distance_x = self.player.x - self.x
-        distance_y = abs(self.player.y - self.y)
-        if self.player.orientation == 'right' and 0 >= distance_x >= -self.player.attack_range and distance_y <= 100:
-            self.is_can_be_attacked = True
-        elif self.player.orientation == 'left' and 0 <= distance_x <= self.player.attack_range and distance_y <= 100:
-            self.is_can_be_attacked = True
+        if not self.destroyed:
+            distance_x = self.player.x - self.x
+            distance_y = abs(self.player.y - self.y)
+            if self.player.orientation == 'right' and 0 >= distance_x >= -self.player.attack_range and distance_y <= 100:
+                self.is_can_be_attacked = True
+            elif self.player.orientation == 'left' and 0 <= distance_x <= self.player.attack_range and distance_y <= 100:
+                self.is_can_be_attacked = True
+            else:
+                self.is_can_be_attacked = False
         else:
             self.is_can_be_attacked = False
 
+    def hp_check(self):
+        if self.current_hp <= 0:
+            self.destroy()
+            return True
 
     def destroy(self):
         self.destroyed = True
 
+    def respawn(self):
+        self.destroyed = False
+        self.current_hp = self.max_hp
+        self.x = self.spawn_x
+        self.y = self.spawn_y
+        self.speed = self.spawn_speed
+        self.acceleration = self.spawn_acceleration
