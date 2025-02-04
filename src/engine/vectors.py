@@ -29,7 +29,7 @@ class Vector:
         return Vector(self.x - other.x, self.y - other.y)
 
     def __mul__(self, other):
-        return self.x * other.x + self.y * other.y
+        return Vector(self.x * other.x, + self.y * other.y)
 
     def __str__(self):
         return f'Vector({self.x}, {self.y})'
