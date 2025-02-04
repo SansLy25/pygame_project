@@ -1,5 +1,3 @@
-from traceback import print_tb
-
 import pygame
 from engine.objects import Player, GameObject
 from engine.app import App
@@ -116,3 +114,4 @@ if __name__ == "__main__":
         clock.tick(60)
 
     pygame.quit()
+    

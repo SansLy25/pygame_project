@@ -1,12 +1,16 @@
 import pygame
 
-from .interface import Button, Slider, Text
+from .interface import Button, Slider, Text, UpgradeManager, ExperienceBar
 
 
 class App:
     def __init__(self, screen):
         self.screen = screen
         self.is_menu_music = True
+        self.upgrade_manager = UpgradeManager(self.screen)
+        self.experience_bar = ExperienceBar(50, 50, 500, 50, 100, self.screen)
+        self.upgrade_count = 0
+        self.is_lvlup = False
         self.music_volume = 100
         self.sfx_volume = 100
         self.menu_sprites = pygame.sprite.Group()
@@ -25,7 +29,7 @@ class App:
 
     def start_screen(self):
         if not self.is_menu_music:
-            pygame.mixer.music.load('../../assets/menuLoop.mp3')
+            pygame.mixer.music.load('../assets/menuLoop.mp3')
             pygame.mixer.music.play(-1)
             self.is_menu_music = True
         self.screen.blit(self.background_sprite, (0, 0))
@@ -48,3 +52,7 @@ class App:
         self.music_volume = self.vol1_slider.get_value()
         pygame.mixer.music.set_volume(self.music_volume / 100)
         self.sfx_volume = self.vol2_slider.get_value()
+
+    def lvlup(self):
+        self.is_lvlup = True
+        self.upgrade_count += 1
