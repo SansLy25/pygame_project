@@ -7,6 +7,7 @@ from .vectors import Speed, Acceleration
 from .vectors import Vector
 
 class GameObject:
+    all_game_objects = []
     def __init__(self, x, y, width, height, sprite_path=None, animation=None):
         """
         Для доступа к параметрам Rect использовать эти переменные, в данном
@@ -14,13 +15,16 @@ class GameObject:
         объекта используется класс Rect, через эти переменные с помощью property можно
         получать координаты, длину и ширину прямоугольника, 
         """
-
+        GameObject.all_game_objects.append(self)
         self.rect = Rect(x, y, width, height)
         self.sprite = None
+        self.start_sprite = None
         self.animation = animation
 
         if sprite_path:
-            self.sprite = pygame.image.load(sprite_path)
+            sprite = pygame.image.load(sprite_path)
+            self.sprite = pygame.transform.scale(sprite,(width, height))
+            self.start_sprite = self.sprite.copy()
 
     @property
     def x(self):
@@ -48,13 +52,15 @@ class GameObject:
     @x.setter
     def x(self, x):
         params = self.__get_rect_params()
-        params[0] = x
+        if round(x, 0) != params[0]:
+            params[0] = x
         self.rect.update(*params)
 
     @y.setter
     def y(self, y):
         params = self.__get_rect_params()
-        params[1] = y
+        if round(y, 0) != params[1]:
+            params[1] = y
         self.rect.update(*params)
 
     @width.setter
@@ -115,21 +121,56 @@ class GameObject:
         :param screen: pygame.Surface
         """
         if self.animation:
+
             self.animation.update()
-            self.sprite = self.animation.get_current_frame()
+            self.sprite = pygame.transform.scale(self.animation.get_current_frame(), (self.width, self.height))
 
         if self.sprite:
             screen.blit(self.sprite, (self.x, self.y))
         else:
             new_rect = Rect(self.x, self.y, self.width, self.height)
-            new_rect.y -= 38
             pygame.draw.rect(screen, (0, 255, 0), new_rect)
 
-    def update(self):
+    def resolve_collisions(self, others: list):
         """
-        Обновление состояния, этот метод нужно переопределить в дочерних классах
+        Реакция на столкновения с различными обьектами,
+        может быть переопределен в дочерних классах, выглядит страшно,
+        но надо деле просто 4 случае обрабатывается (верхнее, нижнее, правое и левое столкн)
+        :param others: list[GameObject]
         """
-        pass
+        for obj in others:
+            if self.check_collide(obj):
+                overlap_y = min(self.y + self.height,
+                                obj.y + obj.height) - max(self.y, obj.y)
+                overlap_x = min(self.x + self.width, obj.x + obj.width) - max(
+                    self.x, obj.x)
+
+                if overlap_y < overlap_x:
+                    if self.y + self.height > obj.y > self.y:
+                        self.y = obj.y - self.height
+                        if self.speed.direction.y > 0:
+                            self.speed = Speed(self.speed.magnitude,
+                                           Vector(self.speed.direction.x, 0))
+
+                    elif self.y < obj.y + obj.height < self.y + self.height:
+                        self.y = obj.y + obj.height
+                        self.speed = Speed(self.speed.magnitude,
+                                           Vector(self.speed.direction.x, 0))
+                else:
+                    if self.x + self.width > obj.x > self.x:
+                        self.x = obj.x - self.width
+                        self.speed = Speed(self.speed.magnitude,
+                                           Vector(0, self.speed.direction.y))
+                    elif self.x < obj.x + obj.width < self.x + self.width:
+                        self.x = obj.x + obj.width
+                        self.speed = Speed(self.speed.magnitude,
+                                           Vector(0, self.speed.direction.y))
+
+    def update(self, screen, game_objects: list):
+        if hasattr(self, 'move'):
+            self.move()
+        self.resolve_collisions(game_objects)
+        self.draw(screen)
 
 
 class VelocityObject(GameObject):
@@ -165,53 +206,14 @@ class AcceleratedObject(VelocityObject):
         super().move()
         self.speed = self.speed + self.acceleration
         self.speed.magnitude = self.speed.magnitude * 0.91
-        if self.animation:
-            if self.speed.magnitude < 3:
-                self.animation.frame_duration = 10 ** 10
-            else:
-                self.animation.frame_duration = 500 * (1 / self.speed.magnitude)
-
         """
-        В данном случае self 0.90 это коэффициент сопротивления воздуха, чтобы
+        В данном случае self 0.91 это коэффициент сопротивления воздуха, чтобы
         сущность не разгонялась до бесконечности, вынести в константу бы
         """
 
-    def resolve_collision(self, *other):
-        """
-        Реакция на столкновения с различными обьектами,
-        может быть переопределен в дочерних классах, выглядит страшно,
-        но надо деле просто 4 случае обрабатывается (верхнее, нижнее, правое и левое столкн)
-        :param other: list[GameObject]
-        """
-        for obj in other:
-            if self.check_collide(obj):
-                overlap_y = min(self.y + self.height,
-                                obj.y + obj.height) - max(self.y, obj.y)
-                overlap_x = min(self.x + self.width, obj.x + obj.width) - max(
-                    self.x, obj.x)
-
-                if overlap_y < overlap_x:
-                    if self.y + self.height > obj.y > self.y:
-                        self.y = obj.y - self.height
-                        self.speed = Speed(self.speed.magnitude,
-                                           Vector(self.speed.direction.x, 0))
-                    elif self.y < obj.y + obj.height < self.y + self.height:
-                        self.y = obj.y + obj.height
-                        self.speed = Speed(self.speed.magnitude,
-                                           Vector(self.speed.direction.x, 0))
-                else:
-                    if self.x + self.width > obj.x > self.x:
-                        self.x = obj.x - self.width
-                        self.speed = Speed(self.speed.magnitude,
-                                           Vector(0, self.speed.direction.y))
-                    elif self.x < obj.x + obj.width < self.x + self.width:
-                        self.x = obj.x + obj.width
-                        self.speed = Speed(self.speed.magnitude,
-                                           Vector(0, self.speed.direction.y))
-
 
 class Player(AcceleratedObject):
-    def __init__(self, *args, **kwargs):
+    def  __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.orientation = 'right'
         self.target_orientation = 'right'
@@ -229,8 +231,16 @@ class Player(AcceleratedObject):
 
     def draw(self, screen):
         if self.animation:
-            self.sprite = self.animation.get_current_frame()
-            self.animation.update()
+            if -3 < self.speed.get_x_projection() < 3:
+                self.sprite = self.start_sprite
+                self.animation.current_frame = 0
+            else:
+                self.animation.frame_duration = 500 * (
+                            1 / self.speed.magnitude)
+                self.sprite = pygame.transform.scale(
+                    self.animation.get_current_frame(), (self.width, self.height))
+                self.animation.update()
+
             if self.orientation == 'left':
                 self.sprite = pygame.transform.flip(self.sprite, True, False)
 
