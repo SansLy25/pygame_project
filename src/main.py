@@ -55,6 +55,7 @@ if __name__ == "__main__":
     game_started = False
     is_paused = False
     is_settings = False
+    tick_count = 0
 
     while running:
         keys = pygame.key.get_pressed()
@@ -113,6 +114,8 @@ if __name__ == "__main__":
             screen.fill((0, 0, 0))
             if not is_paused:
                 if not app.is_lvlup:
+                    if mouse[0]:
+                        game_object.attack([enemy], tick_count)
                     if keys[pygame.K_SPACE]:
                         if flag:
                             flag = False
@@ -154,5 +157,6 @@ if __name__ == "__main__":
 
         pygame.display.flip()
         clock.tick(60)
+        tick_count += 1
 
     pygame.quit()
