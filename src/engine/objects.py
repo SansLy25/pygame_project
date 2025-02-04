@@ -215,6 +215,7 @@ class Player(AcceleratedObject):
         self.orientation = 'right'
         self.target_orientation = 'right'
         self.hp = 100
+        self.attack_range = 100
 
     def draw(self, screen):
         if self.animation:
@@ -229,6 +230,13 @@ class Player(AcceleratedObject):
 
         screen.blit(self.sprite, (self.x, self.y))
 
+    def attack(self, enemies):
+        for i in enemies:
+            if i.can_be_attacked:
+                i.destroy()
+
+
+
 
 class Enemy(AcceleratedObject):
     def __init__(self, *args, **kwargs):
@@ -237,6 +245,10 @@ class Enemy(AcceleratedObject):
         self.orientation = 'left'
         self.target_orientation = 'left'
         self.vision_range = 100
+        self.is_following = False
+        self.max_vision_range = 500
+        self.is_can_be_attacked = False
+        self.destroyed = False
 
     def draw(self, screen):
         if self.animation:
@@ -254,8 +266,35 @@ class Enemy(AcceleratedObject):
     def move(self):
         super().move()
         distance_x = abs(self.player.x - self.x)
-        if distance_x <= self.vision_range:
-            if self.player.x < self.x:  # Игрок слева
-                self.speed = self.speed + Speed(0.6, Vector.unit_from_angle(180))
-            elif self.player.x > self.x:  # Игрок справа
-                self.speed = self.speed + Speed(0.6, Vector.unit_from_angle(0))
+        if distance_x >= self.player.attack_range:
+            if distance_x <= self.vision_range:
+                self.is_following = True
+                if self.player.x < self.x:  # Игрок слева
+                    self.speed = self.speed + Speed(0.2, Vector.unit_from_angle(180))
+                elif self.player.x > self.x:  # Игрок справа
+                    self.speed = self.speed + Speed(0.2, Vector.unit_from_angle(0))
+            elif self.is_following:
+                distance_x = abs(self.player.x - self.x)
+                if distance_x <= self.max_vision_range:
+                    if self.player.x < self.x:  # Игрок слева
+                        self.speed = self.speed + Speed(0.2, Vector.unit_from_angle(180))
+                    elif self.player.x > self.x:  # Игрок справа
+                        self.speed = self.speed + Speed(0.2, Vector.unit_from_angle(0))
+                else:
+                    self.is_following = False
+
+    def can_be_attacked(self):
+        distance_x = self.player.x - self.x
+        if self.player.orientation == 'right' and 0 >= distance_x >= -self.player.attack_range:
+            self.is_can_be_attacked = True
+        elif self.player.orientation == 'left' and 0 <= distance_x <= self.player.attack_range:
+            self.is_can_be_attacked = True
+        else:
+            self.is_can_be_attacked = False
+        print(self.is_can_be_attacked, 'att')
+        print(self.destroyed, 'dest')
+
+
+    def destroy(self):
+        self.destroyed = True
+

@@ -59,27 +59,28 @@ if __name__ == "__main__":
     while running:
         keys = pygame.key.get_pressed()
         events = pygame.event.get()
+        mouse = pygame.mouse.get_pressed()
         for event in events:
             if event.type == pygame.QUIT:
                 running = False
-            if not game_started and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.play_button.is_hovered:
+            if not game_started and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.play_button.is_hovered: # меню
                 game_started = True
                 is_paused = False
                 pygame.mixer.music.stop()
                 app.is_menu_music = False
                 pygame.mixer.music.load('../assets/stage1.mp3')
                 pygame.mixer.music.play(-1)
-            if not is_settings:
-                if is_paused and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.resume_button.is_hovered:
+            if not is_settings and is_paused: # пауза
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.resume_button.is_hovered:
                     is_paused = not is_paused
-                if is_paused and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.exit_button.is_hovered:
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.exit_button.is_hovered:
                     game_started = False
-                if is_paused and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.settings_button.is_hovered:
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.settings_button.is_hovered:
                     is_settings = True
-            else:
+            else: # настройки
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.back1_button.is_hovered:
                     is_settings = False
-            if app.is_lvlup:
+            if app.is_lvlup: # меню улучшений
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.upgrade_manager.crit_button.is_hovered:
                     app.upgrade_count -= 1
                     if app.upgrade_count == 0:
@@ -108,6 +109,7 @@ if __name__ == "__main__":
                 is_settings = False
 
         if game_started:
+            enemy.can_be_attacked()
             screen.fill((0, 0, 0))
             if not is_paused:
                 if not app.is_lvlup:
@@ -138,7 +140,7 @@ if __name__ == "__main__":
                     enemy.draw(screen)
                     surface.draw(screen)
                     game_object.move()
-                    enemy.move()
+                    """enemy.move()"""
                 elif app.is_lvlup:
                     app.upgrade_manager.draw()
             elif is_paused:
