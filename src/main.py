@@ -4,6 +4,7 @@ from engine.app import App
 from engine.animation import Animation
 from engine.vectors import Vector, Acceleration, Speed
 from engine.commons import WIDTH, HEIGHT
+from src.engine.interface import ExperienceBar
 
 
 def hover_check(event):
@@ -83,25 +84,21 @@ if __name__ == "__main__":
                     is_settings = False
             if app.is_lvlup: # меню улучшений
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.upgrade_manager.crit_button.is_hovered:
-                    app.upgrade_count -= 1
-                    if app.upgrade_count == 0:
-                        app.is_lvlup = False
+                    game_object.crit_damage = game_object.crit_damage * 1.2
+                    app.is_lvlup = False
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.upgrade_manager.damage_button.is_hovered:
-                    app.upgrade_count -= 1
-                    if app.upgrade_count == 0:
-                        app.is_lvlup = False
+                    game_object.damage = game_object.damage * 1.2
+                    app.is_lvlup = False
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.upgrade_manager.crit_chance_button.is_hovered:
-                    app.upgrade_count -= 1
-                    if app.upgrade_count == 0:
-                        app.is_lvlup = False
-                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.upgrade_manager.damage_button.is_hovered:
-                    app.upgrade_count -= 1
-                    if app.upgrade_count == 0:
-                        app.is_lvlup = False
+                    game_object.crit_chance = int(game_object.crit_chance * 1.02)
+                    app.is_lvlup = False
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.upgrade_manager.hp_button.is_hovered:
-                    app.upgrade_count -= 1
-                    if app.upgrade_count == 0:
-                        app.is_lvlup = False
+                    game_object.max_hp += 100
+                    game_object.current_hp += 100
+                    app.is_lvlup = False
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.upgrade_manager.attack_speed_button.is_hovered:
+                    game_object.attack_speed += 0.5
+                    app.is_lvlup = False
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.upgrade_manager.cancel_button.is_hovered:
                     app.is_lvlup = False
             hover_check(event)
@@ -114,6 +111,10 @@ if __name__ == "__main__":
             screen.fill((0, 0, 0))
             if not is_paused:
                 if not app.is_lvlup:
+                    if game_object.is_max_exp():
+                        app.is_lvlup = True
+                    if keys[pygame.K_j]:
+                        enemy.respawn()
                     if mouse[0]:
                         game_object.attack([enemy], tick_count)
                     if keys[pygame.K_SPACE]:
@@ -143,6 +144,10 @@ if __name__ == "__main__":
                     enemy.draw(screen)
                     surface.draw(screen)
                     game_object.move()
+                    app.expbar.update(game_object.current_exp, game_object.max_exp)
+                    app.expbar.draw()
+                    app.hpbar.update(game_object.current_hp, game_object.max_hp)
+                    app.hpbar.draw()
                     """enemy.move()"""
                 elif app.is_lvlup:
                     app.upgrade_manager.draw()

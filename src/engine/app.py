@@ -1,6 +1,7 @@
 import pygame
 
-from .interface import Button, Slider, Text, UpgradeManager, ExperienceBar
+from .interface import Button, Slider, Text, UpgradeManager, ExperienceBar, HealthBar
+
 
 
 class App:
@@ -8,9 +9,9 @@ class App:
         self.screen = screen
         self.is_menu_music = True
         self.upgrade_manager = UpgradeManager(self.screen)
-        self.experience_bar = ExperienceBar(50, 50, 500, 50, 100, self.screen)
-        self.upgrade_count = 0
         self.is_lvlup = False
+        self.expbar = ExperienceBar(150, 10, 500, 25, 100, self.screen)
+        self.hpbar = HealthBar(60, 540, 50, 100, self.screen)
         self.music_volume = 100
         self.sfx_volume = 100
         self.menu_sprites = pygame.sprite.Group()
@@ -52,7 +53,3 @@ class App:
         self.music_volume = self.vol1_slider.get_value()
         pygame.mixer.music.set_volume(self.music_volume / 100)
         self.sfx_volume = self.vol2_slider.get_value()
-
-    def lvlup(self):
-        self.is_lvlup = True
-        self.upgrade_count += 1
