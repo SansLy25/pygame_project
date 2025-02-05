@@ -17,7 +17,7 @@ class App:
         self.menu_sprites = pygame.sprite.Group()
         self.play_button = Button(50, 275, 160, 85, 'Play', '../assets/Default.png', screen)
         self.background_sprite = pygame.transform.scale(pygame.image.load('../assets/menu_background.jpg'),
-                                                        (800, 600))
+                                                        (1400, 800))
         self.resume_button = Button(300, 140, 200, 80, 'Resume', '../assets/Default.png', screen)
         self.settings_button = Button(300, 260, 200, 80, 'Settings', '../assets/Default.png', screen)
         self.exit_button = Button(300, 380, 200, 80, 'Exit', '../assets/Default.png', screen)
