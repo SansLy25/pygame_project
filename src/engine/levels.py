@@ -2,8 +2,10 @@
 
 from random import randint, random
 
+from engine.animation import Animation
 from engine.objects import SolidObject
 from engine.vectors import Speed
+from game.enemies import Portal
 from src.game.enemies import Spikes
 
 
@@ -122,6 +124,10 @@ class Room:
         elif cell == 's':
             return Spikes(0, 0, self.tile_width, self.tile_height * 0.2,
                                sprite_path='../assets/tiles/spikes.png')
+        elif cell == 'p':
+            animation = Animation([f'../assets/portal/{i}.png' for i in range(6)], 150)
+            return Portal(0, 0, self.tile_width * 0.8, self.tile_height * 0.8,
+                               sprite_path='../assets/portal/1.png', animation=animation)
 
     def load_objects(self):
         objects = []
@@ -133,6 +139,10 @@ class Room:
                     if type(object) == Spikes:
                         object.y = i * self.tile_height + self.tile_size * 0.8
                         object.x = j * self.tile_width
+                    elif type(object) == Portal:
+                        object.y = i * self.tile_height + self.tile_height * 0.1
+                        object.x = j * self.tile_width + self.tile_width * 0.1
+
                     else:
                         object.y = i * self.tile_height
                         object.x = j * self.tile_width

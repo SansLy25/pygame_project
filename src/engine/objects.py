@@ -25,9 +25,12 @@ class GameObject:
         self.animation = animation
 
         if sprite_path:
-            sprite = pygame.image.load(sprite_path)
-            self.sprite = pygame.transform.scale(sprite, (width, height))
-            self.start_sprite = self.sprite.copy()
+            self.load_sprite(sprite_path)
+
+    def load_sprite(self, sprite_path):
+        sprite = pygame.image.load(sprite_path)
+        self.sprite = pygame.transform.scale(sprite, (self.width, self.height))
+        self.start_sprite = self.sprite.copy()
 
     @property
     def x(self):

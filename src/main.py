@@ -41,7 +41,7 @@ if __name__ == "__main__":
     background = Background([f'../assets/background/{i}.png' for i in range(1, 7)], WIDTH, HEIGHT)
     room = Room('../rooms/room1.txt', 0, 0, 80)
 
-    game_object = Player(100, 0, 45, 76,
+    game_object = Player(100, 560, 45, 76,
                          sprite_path="../assets/player/player_stay.png",
                          a0=Acceleration(1,
                                          Vector.unit_from_angle(
