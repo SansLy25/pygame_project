@@ -1,10 +1,9 @@
 import pygame
-from engine.objects import Player, GameObject, Enemy
+from engine.objects import Player, GameObject, Enemy, SolidObject
 from engine.app import App
 from engine.animation import Animation
 from engine.vectors import Vector, Acceleration, Speed
 from engine.commons import WIDTH, HEIGHT
-from src.engine.interface import ExperienceBar
 
 
 def hover_check(event):
@@ -35,11 +34,11 @@ if __name__ == "__main__":
     pygame.display.set_caption("GameObject Example")
 
     game_object_animation = Animation(
-        [f'../assets/adventurer-0{i + 1}.png' for i in
-         range(5)], 100)
+        [f'../assets/player/animations/run/{i}.png' for i in
+         range(6)], 100)
 
-    game_object = Player(100, 100, 100, 100,
-                         sprite_path="../assets/adventurer-00.png",
+    game_object = Player(100, 0, 35, 68,
+                         sprite_path="../assets/player/player_stay.png",
                          a0=Acceleration(1,
                                          Vector.unit_from_angle(
                                              90)),
@@ -49,7 +48,7 @@ if __name__ == "__main__":
                   a0=Acceleration(1, Vector.unit_from_angle(90)))
     enemy.set_target(game_object)
 
-    surface = GameObject(0, 200, 1000, 1000)
+    surface = SolidObject(0, 200, 1000, 1000)
     running = True
     clock = pygame.time.Clock()
     flag = True
@@ -118,13 +117,7 @@ if __name__ == "__main__":
                     if mouse[0]:
                         game_object.attack([enemy], tick_count)
                     if keys[pygame.K_SPACE]:
-                        if flag:
-                            flag = False
-                            game_object.speed = game_object.speed + Speed(12,
-                                                                          Vector.unit_from_angle(
-                                                                              270))
-                    else:
-                        flag = True
+                        game_object.jump()
 
                     if keys[pygame.K_RIGHT]:
                         game_object.speed = game_object.speed + Speed(0.6,
