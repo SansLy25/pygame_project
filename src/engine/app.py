@@ -10,8 +10,8 @@ class App:
         self.is_menu_music = True
         self.upgrade_manager = UpgradeManager(self.screen)
         self.is_lvlup = False
-        self.expbar = ExperienceBar(150, 10, 500, 25, 100, self.screen)
-        self.hpbar = HealthBar(60, 540, 50, 100, self.screen)
+        self.expbar = ExperienceBar(450, 10, 500, 25, 100, self.screen)
+        self.hpbar = HealthBar(60, 700, 50, 100, self.screen)
         self.music_volume = 100
         self.sfx_volume = 100
         self.menu_sprites = pygame.sprite.Group()
