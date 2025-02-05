@@ -1,5 +1,6 @@
 import pygame
 import random
+import weakref
 from pygame import Rect
 
 from .animation import Animation
@@ -8,7 +9,7 @@ from .vectors import Vector
 
 
 class GameObject:
-    all_game_objects = []
+    all_game_objects = weakref.WeakSet()
 
     def __init__(self, x, y, width, height, sprite_path=None, animation=None):
         """
@@ -17,7 +18,7 @@ class GameObject:
         объекта используется класс Rect, через эти переменные с помощью property можно
         получать координаты, длину и ширину прямоугольника, 
         """
-        GameObject.all_game_objects.append(self)
+        GameObject.all_game_objects.add(self)
         self.rect = Rect(x, y, width, height)
         self.sprite = None
         self.start_sprite = None
@@ -131,7 +132,7 @@ class GameObject:
             screen.blit(self.sprite, (self.x, self.y))
         else:
             new_rect = Rect(self.x, self.y, self.width, self.height)
-            pygame.draw.rect(screen, (0, 255, 0), new_rect)
+            pygame.draw.rect(screen, (22, 16, 54), new_rect)
 
     def resolve_physic(self, obj):
         """
@@ -223,9 +224,13 @@ class AcceleratedObject(VelocityObject):
         сущность не разгонялась до бесконечности, вынести в константу бы
         """
 
+class BackgroundObject(GameObject):
+    def resolve_collisions(self, others: list):
+        pass
 
 class SolidObject(GameObject):
-    pass
+    def resolve_collisions(self, others: list):
+        pass
 
 
 class Player(AcceleratedObject):
@@ -248,7 +253,7 @@ class Player(AcceleratedObject):
         self.is_on_floor = False
         self.jump_animation = Animation(
             [f'../assets/player/animations/jump/{i}.png' for i in range(4)],
-            100)
+            150)
         self.run_animation = Animation(
             [f'../assets/player/animations/run/{i}.png' for i in
              range(6)], 100)
@@ -278,7 +283,6 @@ class Player(AcceleratedObject):
 
     def resolve_collisions(self, others: list):
         self.is_on_floor = self._is_on_floor(others)
-        print(self.animation)
         if self.is_jumped and self.is_on_floor:
             self.is_jumped = False
             self.animation = self.run_animation
@@ -294,10 +298,15 @@ class Player(AcceleratedObject):
             else:
                 if not self.is_jumped:
                     self.animation.frame_duration = 500 * (
-                            1 / self.speed.magnitude)
-                self.sprite = pygame.transform.scale(
-                    self.animation.get_current_frame(),
-                    (self.width, self.height))
+                                1 / self.speed.magnitude)
+                original_sprite = self.animation.get_current_frame()
+                original_width, original_height = original_sprite.get_size()
+                ratio = original_width / original_height
+                new_width = int(self.height * ratio)
+
+
+                self.sprite = pygame.transform.scale(original_sprite,
+                                                     (new_width, self.height))
                 self.animation.update()
 
             if self.orientation == 'left':
