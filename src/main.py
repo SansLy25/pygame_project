@@ -1,10 +1,11 @@
 import pygame
 from engine.objects import Player, GameObject, Enemy, SolidObject
-from engine.app import App
-from engine.animation import Animation
-from engine.vectors import Vector, Acceleration, Speed
-from engine.commons import WIDTH, HEIGHT
+from src.engine.app import App
+from src.engine.animation import Animation
+from src.engine.vectors import Vector, Acceleration, Speed
+from src.engine.commons import WIDTH, HEIGHT
 from game.background import Background
+from src.engine.levels import Room
 
 def hover_check(event):
     if event.type == pygame.MOUSEMOTION:
@@ -38,6 +39,7 @@ if __name__ == "__main__":
          range(6)], 100)
 
     background = Background([f'../assets/background/{i}.png' for i in range(1, 7)], WIDTH, HEIGHT)
+    room = Room('../rooms/room1.txt', 0, 0, 80)
 
     game_object = Player(100, 0, 45, 76,
                          sprite_path="../assets/player/player_stay.png",
@@ -46,11 +48,7 @@ if __name__ == "__main__":
                                              90)),
                          animation=game_object_animation)
 
-    enemy = Enemy(500, 100, 100, 100, sprite_path="../assets/adventurer-00.png",
-                  a0=Acceleration(1, Vector.unit_from_angle(90)))
-    enemy.set_target(game_object)
 
-    surface = SolidObject(0, 500, 1000, 1000)
     running = True
     clock = pygame.time.Clock()
     flag = True
@@ -108,16 +106,12 @@ if __name__ == "__main__":
                 is_settings = False
 
         if game_started:
-            enemy.can_be_attacked()
             screen.fill((0, 0, 0))
             if not is_paused:
                 if not app.is_lvlup:
                     if game_object.is_max_exp():
                         app.is_lvlup = True
-                    if keys[pygame.K_j]:
-                        enemy.respawn()
-                    if mouse[0]:
-                        game_object.attack([enemy], tick_count)
+
                     if keys[pygame.K_SPACE]:
                         game_object.jump()
 
@@ -133,9 +127,14 @@ if __name__ == "__main__":
                                                                           180))
                         game_object.target_orientation = 'left'
 
-                    all_game_objects = GameObject.all_game_objects
+                    all_game_objects = list(GameObject.all_game_objects) + room.objects
+
                     # фон обновляем отдельно, тк это кластер объектов, а также нужно передать координаты игрока
                     background.update(screen, game_object.x, game_object.y)
+                    collide = False
+                    for obj in room.objects:
+                        if game_object.check_collide(obj):
+                            collide = True
 
                     for object in all_game_objects:
                         object.update(screen, [obj for obj in all_game_objects if obj != object])

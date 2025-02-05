@@ -137,7 +137,7 @@ class GameObject:
     def resolve_physic(self, obj):
         """
         Физическое разрешение столкновения
-        :param other:
+        :param obj:
         :return:
         """
         overlap_y = min(self.y + self.height,
@@ -178,6 +178,7 @@ class GameObject:
         for obj in others:
             if self.check_collide(obj):
                 if type(obj) == SolidObject:
+
                     self.resolve_physic(obj)
 
     def update(self, screen, game_objects: list):
@@ -274,7 +275,7 @@ class Player(AcceleratedObject):
 
     def jump(self):
         if self.is_on_floor:
-            self.speed = self.speed + Speed(17,
+            self.speed = self.speed + Speed(25,
                                             Vector.unit_from_angle(
                                                 270))
             self.is_jumped = True
