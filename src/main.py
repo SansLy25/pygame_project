@@ -33,7 +33,7 @@ if __name__ == "__main__":
     app = App(screen)
     pygame.mixer.music.load('../assets/menuLoop.mp3')
     pygame.mixer.music.play(-1)
-
+    font = pygame.font.Font(None, 36)
     pygame.display.set_caption("GameObject Example")
 
     game_object_animation = Animation(
@@ -153,7 +153,6 @@ if __name__ == "__main__":
                         game_object.target_orientation = 'left'
 
                     all_game_objects = list(GameObject.all_game_objects) + room.objects
-
                     # фон обновляем отдельно, тк это кластер объектов, а также нужно передать координаты игрока
                     background.update(screen, game_object.x, game_object.y)
                     collide = False
@@ -185,8 +184,11 @@ if __name__ == "__main__":
         else:
             app.start_screen()
 
+        fps = int(clock.get_fps())
+        fps_text = font.render(f"FPS: {fps}", True,(255, 255, 255))
+        screen.blit(fps_text, (10, 10))
         pygame.display.flip()
-        clock.tick(120)
+        clock.tick(60)
         tick_count += 1
 
     pygame.quit()

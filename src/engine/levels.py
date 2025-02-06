@@ -1,9 +1,10 @@
-#from pygame.examples.sprite_texture import sprite
+from random import randint
 
-from random import randint, random
+import pygame
 
 from engine.animation import Animation
-from engine.objects import SolidObject
+from engine.objects import SolidObject, Tile
+from engine.utils import find_max_rectangles
 from engine.vectors import Speed
 from game.enemies import Portal
 from src.game.enemies import Spikes
@@ -50,8 +51,8 @@ class Room:
 
         sprite = None
         """
-        Здесь исходя из соседей выбирается нужный спрайт, к сожалению по другому это не сделать, да
-        выглядит страшненько, но максимально сжато, и понятно
+        Здесь исходя из соседей тайла выбирается нужный спрайт, к сожалению по другому это не сделать, да
+        выглядит страшненько, но максимально сжато (основное вынес в 2 другие функции), и понятно
         """
         if cell == '.':
             return None
@@ -119,7 +120,7 @@ class Room:
                 else:
                     sprite = '../assets/tiles/Tile_12.png'
 
-            return SolidObject(0, 0, self.tile_width, self.tile_height,
+            return Tile(0, 0, self.tile_width, self.tile_height,
                                sprite_path=sprite)
         elif cell == 's':
             return Spikes(0, 0, self.tile_width, self.tile_height * 0.2,
@@ -131,6 +132,8 @@ class Room:
 
     def load_objects(self):
         objects = []
+        tiles_matrix = [[0 for _ in range(len(self.layout[0]))] for _ in range(len(self.layout))]
+
         for i in range(len(self.layout)):
             for j in range(len(self.layout[0])):
                 object = self.choose_object(self.layout[i][j],
@@ -146,9 +149,39 @@ class Room:
                     else:
                         object.y = i * self.tile_height
                         object.x = j * self.tile_width
-                    objects.append(object)
 
+                    if type(object) == Tile:
+                        tiles_matrix[i][j] = object
+                    else:
+                        tiles_matrix[i][j] = 0
+                        objects.append(object)
+
+        for tile_rect_list in find_max_rectangles(tiles_matrix):
+            rectangle = self.get_merged_rectangle_tiles(tile_rect_list)
+            objects.append(rectangle)
+
+        del tiles_matrix
         return objects
+
+    @staticmethod
+    def get_merged_rectangle_tiles(tile_list: list):
+        min_x = min(tile.x for tile in tile_list)
+        min_y = min(tile.y for tile in tile_list)
+
+        max_x = max(tile.x + tile.width for tile in tile_list)
+        max_y = max(tile.y + tile.height for tile in tile_list)
+
+        width = max_x - min_x
+        height = max_y - min_y
+
+        combined_sprite = pygame.Surface((width, height))
+        combined_sprite.fill((0, 0, 0))
+        for tile in tile_list:
+            combined_sprite.blit(tile.sprite, (tile.x - min_x, tile.y - min_y))
+
+        rectangle = SolidObject(min_x, min_y, width, height)
+        rectangle.sprite = combined_sprite
+        return rectangle
 
     def get_neighbors(self, row, col):
         neighbors = {}

@@ -235,6 +235,9 @@ class SolidObject(GameObject):
     def resolve_collisions(self, others: list):
         pass
 
+class Tile(SolidObject):
+    pass
+
 class Item(GameObject):
     def __init__(self, x, y, width, height, damage, attack_speed, crit_damage, crit_chance, sprite_path=None):
         super().__init__(x, y, width, height, sprite_path)
