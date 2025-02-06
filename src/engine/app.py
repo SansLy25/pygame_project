@@ -1,5 +1,6 @@
 import pygame
 
+from .commons import WIDTH, HEIGHT
 from .interface import Button, Slider, Text, UpgradeManager, ExperienceBar, HealthBar
 
 
@@ -27,6 +28,9 @@ class App:
         self.back1_button = Button(300, 450, 200, 80, 'Back', '../assets/Default.png', screen)
         self.settings_text1 = Text("Music volume", 36, 520, 170, 100, 100, (255, 255, 255), screen)
         self.settings_text2 = Text("SFX volume", 36, 510, 270, 100, 100, (255, 255, 255), screen)
+        self.pick_button = Button(WIDTH // 2 - 170, 690, 160, 100, 'Да', '../assets/Default.png', screen)
+        self.cancel_button = Button(WIDTH // 2 + 10, 690, 160, 100, 'Нет', '../assets/Default.png', screen)
+        self.text1 = Text("Взять найденную вещь?", 36, WIDTH // 2 - 50, 600, 100, 100, (255, 255, 255), screen)
 
     def start_screen(self):
         if not self.is_menu_music:
@@ -53,3 +57,8 @@ class App:
         self.music_volume = self.vol1_slider.get_value()
         pygame.mixer.music.set_volume(self.music_volume / 100)
         self.sfx_volume = self.vol2_slider.get_value()
+
+    def item_found(self):
+        self.pick_button.draw()
+        self.cancel_button.draw()
+        self.text1.draw()

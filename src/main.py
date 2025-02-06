@@ -20,6 +20,8 @@ def hover_check(event):
         app.upgrade_manager.damage_button.check_hover(event.pos)
         app.upgrade_manager.attack_speed_button.check_hover(event.pos)
         app.upgrade_manager.cancel_button.check_hover(event.pos)
+        app.cancel_button.check_hover(event.pos)
+        app.pick_button.check_hover(event.pos)
 
 
 if __name__ == "__main__":
@@ -48,6 +50,9 @@ if __name__ == "__main__":
                                              90)),
                          animation=game_object_animation)
 
+    enemy = Enemy(500, 100, 100, 100, sprite_path="../assets/adventurer-00.png",
+                  a0=Acceleration(1, Vector.unit_from_angle(90)))
+    enemy.set_target(game_object)
 
     running = True
     clock = pygame.time.Clock()
@@ -64,54 +69,74 @@ if __name__ == "__main__":
         for event in events:
             if event.type == pygame.QUIT:
                 running = False
-            if not game_started and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.play_button.is_hovered: # меню
+            if not game_started and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.play_button.is_hovered:  # меню
                 game_started = True
                 is_paused = False
                 pygame.mixer.music.stop()
                 app.is_menu_music = False
                 pygame.mixer.music.load('../assets/stage1.mp3')
                 pygame.mixer.music.play(-1)
-            if not is_settings and is_paused: # пауза
+            if not is_settings and is_paused:  # пауза
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.resume_button.is_hovered:
                     is_paused = not is_paused
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.exit_button.is_hovered:
                     game_started = False
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.settings_button.is_hovered:
                     is_settings = True
-            else: # настройки
+            elif is_settings and is_paused:  # настройки
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.back1_button.is_hovered:
                     is_settings = False
-            if app.is_lvlup: # меню улучшений
+            elif app.is_lvlup:  # меню улучшений
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.upgrade_manager.crit_button.is_hovered:
                     game_object.crit_damage = game_object.crit_damage * 1.2
                     app.is_lvlup = False
+                    game_object.is_max_exp = False
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.upgrade_manager.damage_button.is_hovered:
                     game_object.damage = game_object.damage * 1.2
                     app.is_lvlup = False
+                    game_object.is_max_exp = False
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.upgrade_manager.crit_chance_button.is_hovered:
                     game_object.crit_chance = int(game_object.crit_chance * 1.02)
                     app.is_lvlup = False
+                    game_object.is_max_exp = False
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.upgrade_manager.hp_button.is_hovered:
                     game_object.max_hp += 100
                     game_object.current_hp += 100
                     app.is_lvlup = False
+                    game_object.is_max_exp = False
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.upgrade_manager.attack_speed_button.is_hovered:
                     game_object.attack_speed += 0.5
                     app.is_lvlup = False
+                    game_object.is_max_exp = False
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.upgrade_manager.cancel_button.is_hovered:
                     app.is_lvlup = False
+                    game_object.is_max_exp = False
+            elif game_object.is_item_found:
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.cancel_button.is_hovered:
+                    game_object.is_item_found = False
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.pick_button.is_hovered:
+                    game_object.is_item_found = False
+                    game_object.damage_mod = game_object.found_item.damage
+                    game_object.attack_speed_mod = game_object.found_item.attack_speed
+                    game_object.crit_chance_mod = game_object.found_item.crit_chance
+                    game_object.crit_damage_mod = game_object.found_item.crit_damage
             hover_check(event)
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 is_paused = not is_paused
                 is_settings = False
 
         if game_started:
+            enemy.can_be_attacked()
             screen.fill((0, 0, 0))
             if not is_paused:
                 if not app.is_lvlup:
-                    if game_object.is_max_exp():
+                    if game_object.is_max_exp:
                         app.is_lvlup = True
-
+                    if keys[pygame.K_j]:
+                        enemy.respawn()
+                        game_object.debug()
+                    if mouse[0]:
+                        game_object.attack([enemy], tick_count)
                     if keys[pygame.K_SPACE]:
                         game_object.jump()
 
@@ -139,10 +164,15 @@ if __name__ == "__main__":
                     for object in all_game_objects:
                         object.update(screen, [obj for obj in all_game_objects if obj != object])
 
+                    if enemy.is_can_attack:
+                        enemy.attack(tick_count)
+
                     app.expbar.update(game_object.current_exp, game_object.max_exp)
                     app.expbar.draw()
                     app.hpbar.update(game_object.current_hp, game_object.max_hp)
                     app.hpbar.draw()
+                    if game_object.is_item_found:
+                        app.item_found()
 
                 elif app.is_lvlup:
                     app.upgrade_manager.draw()
