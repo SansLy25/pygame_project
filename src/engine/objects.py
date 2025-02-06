@@ -182,7 +182,7 @@ class GameObject:
         """
         for obj in others:
             if self.check_collide(obj):
-                if type(obj) == SolidObject:
+                if type(obj) in (SolidObject, Tile, Platform):
                     self.resolve_physic(obj)
 
     def update(self, screen, game_objects: list):
@@ -234,6 +234,15 @@ class BackgroundObject(GameObject):
     def resolve_collisions(self, others: list):
         pass
 
+class BackgroundNotScaledObject(BackgroundObject):
+    def load_sprite(self, sprite_path):
+        original_sprite = pygame.image.load(sprite_path)
+        original_width, original_height = original_sprite.get_size()
+        ratio = original_width / original_height
+        new_width = int(self.height * ratio)
+
+        self.sprite = pygame.transform.scale(original_sprite, (new_width, self.height))
+
 
 class SolidObject(GameObject):
     def resolve_collisions(self, others: list):
@@ -243,6 +252,8 @@ class SolidObject(GameObject):
 class Tile(SolidObject):
     pass
 
+class Platform(SolidObject):
+    pass
 
 class Item(GameObject):
     def __init__(self, x, y, width, height, damage, attack_speed, crit_damage, crit_chance, sprite_path=None):
@@ -295,7 +306,7 @@ class Player(AcceleratedObject):
 
     def _is_on_floor(self, objects):
         for obj in objects:
-            if type(obj) == SolidObject:
+            if type(obj) in (SolidObject, Platform):
                 overlap_y = min(self.y + self.height,
                                 obj.y + obj.height) - max(self.y, obj.y)
                 overlap_x = min(self.x + self.width, obj.x + obj.width) - max(

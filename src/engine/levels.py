@@ -3,10 +3,10 @@ from random import randint
 import pygame
 
 from engine.animation import Animation
-from engine.objects import SolidObject, Tile, Enemy
+from engine.objects import SolidObject, Tile, Enemy, Platform
 from engine.utils import find_max_rectangles
-from engine.vectors import Speed, Acceleration, Vector
-from game.enemies import Portal
+from engine.vectors import Acceleration, Vector
+from game.enemies import Portal, Tree, BigTree, Box, SmallBox
 from src.game.enemies import Spikes
 
 
@@ -25,15 +25,13 @@ class Room:
         with open(filename, 'r') as mapFile:
             level_map = [line.strip() for line in mapFile]
 
-        max_width = max(map(len, level_map))
-
         layout = [list(string) for string in level_map]
 
         return layout
 
     def choose_object(self, cell, neighbours):
-        def get_neighbour(direction):
-            return neighbours.get(direction, False)
+        def get_neighbour(direction, default=False):
+            return neighbours.get(direction, default)
 
         def air_condition(air_neighbours, filled_neighbours):
             directions = {'lu': 'left_up', 'um': 'up_mid', 'ru': 'right_up',
@@ -133,6 +131,21 @@ class Room:
             return Enemy(0, 0, 80, 65, sprite_path="../assets/adventurer-00.png",
                          a0=Acceleration(1, Vector.unit_from_angle(90)))
 
+        elif cell == 't':
+            return Tree(0, 0, self.tile_width, self.tile_height * 0.5, sprite_path='../assets/objects/13.png')
+
+        elif cell == 'T':
+            return BigTree(0, 0, self.tile_width, self.tile_height * 1.5, sprite_path='../assets/objects/16.png')
+
+        elif cell == 'b':
+            return SmallBox(0, 0, self.tile_width, self.tile_height * 0.4, sprite_path='../assets/objects/Box4.png')
+
+        elif cell == 'B':
+            return Box(0, 0, self.tile_width, self.tile_height * 0.6, sprite_path='../assets/objects/Box3.png')
+
+        elif cell == 'h':
+            return Platform(0, 0, self.tile_width * 0.4, self.tile_height * 0.4, sprite_path='../assets/objects/platform_left.png')
+
 
     def load_objects(self):
         objects = []
@@ -149,7 +162,27 @@ class Room:
                     elif type(object) == Portal:
                         object.y = i * self.tile_height + self.tile_height * 0.1
                         object.x = j * self.tile_width + self.tile_width * 0.1
-
+                    elif type(object) == Tree:
+                        object.y = i * self.tile_height + self.tile_height * 0.5
+                        object.x = j * self.tile_width + self.tile_width * 0.1
+                    elif type(object) == BigTree:
+                        object.y = i * self.tile_height - self.tile_height * 0.5
+                        object.x = j * self.tile_width + self.tile_width * 0.1
+                    elif type(object) == SmallBox:
+                        object.y = i * self.tile_height + self.tile_height * 0.6
+                        object.x = j * self.tile_width + self.tile_width * 0.2
+                    elif type(object) == Box:
+                        object.y = i * self.tile_height + self.tile_height * 0.5
+                        object.x = j * self.tile_width
+                    elif type(object) == Platform:
+                        neighbours = self.get_neighbors(i, j)
+                        if neighbours.get('right_mid', '#') == '#':
+                            object.sprite = pygame.transform.flip(object.sprite, True, False)
+                            object.y = i * self.tile_height
+                            object.x = j * self.tile_width + self.tile_width * 0.6
+                        else:
+                            object.y = i * self.tile_height
+                            object.x = j * self.tile_width
                     else:
                         object.y = i * self.tile_height
                         object.x = j * self.tile_width
@@ -204,21 +237,3 @@ class Room:
 
         return neighbors
 
-    """
-    Генерирует комнату из плана self.layout
-    Все спрайты комнаты находятся в группе self.room_group
-    """
-
-    # def generate_room(self):
-    #     for y in range(len(self.layout)):
-    #         for x in range(len(self.layout[y])):
-    #             if self.layout[y][x] == '.':
-    #                 Tile(self, 'empty', x * self.tile_width + self.x,
-    #                      y * self.tile_height + self.y)
-    #             elif self.layout[y][x] == '#':
-    #                 self.room_group.add(
-    #                     Tile(self, 'wall', x * self.tile_width + self.x,
-    #                          y * self.tile_height + self.y))
-    #             elif self.layout[y][x] == '@':
-    #                 Tile(self, 'empty', x * self.tile_width + self.x,
-    #                      y * self.tile_height + self.y)

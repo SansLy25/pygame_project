@@ -1,11 +1,20 @@
-from engine.objects import GameObject
-from src.engine.objects import SolidObject
+from engine.objects import GameObject, BackgroundNotScaledObject
+from engine.objects import SolidObject
 
-class Spikes(SolidObject):
+class Spikes(GameObject):
     pass
 
 class Portal(GameObject):
     pass
 
-class Tree(GameObject):
+class BigTree(BackgroundNotScaledObject):
+    pass
+
+class Tree(BackgroundNotScaledObject):
+    pass
+
+class Box(BackgroundNotScaledObject):
+    pass
+
+class SmallBox(BackgroundNotScaledObject):
     pass
