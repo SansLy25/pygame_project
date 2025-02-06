@@ -28,7 +28,7 @@ class LevelEditor(QWidget):
         layout.addWidget(self.grid_widget)
 
         self.symbol_selector = QComboBox()
-        self.symbol_selector.addItems(['#', '.', 's', 'p', 'e'])
+        self.symbol_selector.addItems(['#', '.', 's', 'p', 'e', 'b', 'B', 't', 'T'])
         self.symbol_selector.currentTextChanged.connect(self.set_symbol)
         self.current_symbol = '#'
         layout.addWidget(self.symbol_selector)

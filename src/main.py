@@ -1,5 +1,5 @@
 import pygame
-from engine.objects import Player, GameObject, Enemy, SolidObject
+from engine.objects import Player, GameObject, Enemy
 from src.engine.app import App
 from src.engine.animation import Animation
 from src.engine.vectors import Vector, Acceleration, Speed
@@ -43,6 +43,7 @@ if __name__ == "__main__":
 
     background = Background([f'../assets/background/{i}.png' for i in range(1, 7)], WIDTH, HEIGHT)
     room = Room('../rooms/room1.txt', 0, 0, 80)
+    rooms = Room
 
     game_object = Player(100, 560, 45, 76,
                          sprite_path="../assets/player/player_stay.png",
