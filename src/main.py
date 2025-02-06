@@ -170,9 +170,6 @@ if __name__ == "__main__":
                     for object in all_game_objects:
                         object.update(screen, [obj for obj in all_game_objects if obj != object])
 
-                    """if enemy.is_can_attack:
-                        enemy.attack(tick_count)"""
-
                     app.expbar.update(game_object.current_exp, game_object.max_exp)
                     app.expbar.draw()
                     app.hpbar.update(game_object.current_hp, game_object.max_hp)

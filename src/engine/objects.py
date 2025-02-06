@@ -274,6 +274,7 @@ class Player(AcceleratedObject):
         self.found_item = None
         self.is_max_exp = False
         self.attack_speed_mod = 0
+        self.last_damage_time = 0
         self.damage_mod = 0
         self.crit_chance_mod = 0
         self.crit_damage_mod = 0
@@ -391,6 +392,12 @@ class Player(AcceleratedObject):
         self.max_exp_check()
         self.item_found(game_objects)
 
+    def hurt(self, damage, tick):
+        cooldown = int(120 / 1)
+        if tick - self.last_damage_time >= cooldown:
+            self.last_damage_time = tick
+            self.current_hp -= damage
+
 
 class Enemy(AcceleratedObject):
     def __init__(self, *args, **kwargs):
@@ -414,6 +421,15 @@ class Enemy(AcceleratedObject):
         self.is_can_be_attacked = False
         self.destroyed = False
         self.is_can_attack = False
+        """self.run_animation = Animation(
+            [f'../assets/enemy/walk/{i}.png' for i in
+             range(4)], 100)
+        self.attack_animation = Animation(
+            [f'../assets/enemy/attack/{i}.png' for i in
+             range(4)], 100)
+        self.hurt_animation = Animation(
+            [f'../assets/enemy/hurt/{i}.png' for i in
+             range(7)], 100)"""
 
     def draw(self, screen):
         if not self.destroyed:
@@ -490,9 +506,7 @@ class Enemy(AcceleratedObject):
         if current_time - self.last_attack_time >= attack_cooldown:
             print('attacked')
             self.last_attack_time = current_time
-            self.player.current_hp -= self.damage
-            if self.player.hp_check():
-                pass
+            self.player.hurt(self.damage, current_time)
 
     def hp_check(self):
         if self.current_hp <= 0:
