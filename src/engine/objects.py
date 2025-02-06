@@ -227,9 +227,11 @@ class AcceleratedObject(VelocityObject):
         сущность не разгонялась до бесконечности, вынести в константу бы
         """
 
+
 class BackgroundObject(GameObject):
     def resolve_collisions(self, others: list):
         pass
+
 
 class SolidObject(GameObject):
     def resolve_collisions(self, others: list):
@@ -237,6 +239,7 @@ class SolidObject(GameObject):
 
 class Tile(SolidObject):
     pass
+
 
 class Item(GameObject):
     def __init__(self, x, y, width, height, damage, attack_speed, crit_damage, crit_chance, sprite_path=None):
@@ -261,7 +264,7 @@ class Player(AcceleratedObject):
         self.current_exp = 0
         self.attack_range = 100
         self.damage = 25
-        self.attack_speed = 1.5
+        self.attack_speed = 2
         self.crit_damage = 2
         self.crit_chance = 1
         self.last_attack_time = 0
@@ -321,12 +324,11 @@ class Player(AcceleratedObject):
             else:
                 if not self.is_jumped:
                     self.animation.frame_duration = 500 * (
-                                1 / self.speed.magnitude)
+                            1 / self.speed.magnitude)
                 original_sprite = self.animation.get_current_frame()
                 original_width, original_height = original_sprite.get_size()
                 ratio = original_width / original_height
                 new_width = int(self.height * ratio)
-
 
                 self.sprite = pygame.transform.scale(original_sprite,
                                                      (new_width, self.height))
@@ -358,7 +360,7 @@ class Player(AcceleratedObject):
                     else:
                         i.current_hp -= (self.damage + self.damage_mod)
                     if i.hp_check():
-                        self.current_exp += 25
+                        self.current_exp += 75
 
     def max_exp_check(self):
         if self.current_exp >= self.max_exp:
@@ -400,15 +402,15 @@ class Enemy(AcceleratedObject):
         self.max_hp = 100
         self.current_hp = self.max_hp
         self.spawn_acceleration = self.acceleration
-        self.attack_range = 100
-        self.damage = 25
-        self.attack_speed = 1.5
+        self.attack_range = 80
+        self.damage = 7
+        self.attack_speed = 0.5
         self.last_attack_time = 0
         self.orientation = 'left'
         self.target_orientation = 'left'
         self.vision_range = 200
         self.is_following = False
-        self.max_vision_range = 500
+        self.max_vision_range = 300
         self.is_can_be_attacked = False
         self.destroyed = False
         self.is_can_attack = False
@@ -431,8 +433,9 @@ class Enemy(AcceleratedObject):
         if not self.destroyed:
             super().move()
             distance_x = abs(self.player.x - self.x)
-            if distance_x >= self.player.attack_range:
-                if distance_x <= self.vision_range:
+            distance_y = abs(self.player.y - self.y)
+            if distance_x >= self.attack_range:
+                if distance_x <= self.vision_range and distance_y <= 100:
                     self.is_following = True
                     if self.player.x < self.x:
                         self.speed = self.speed + Speed(0.3,
@@ -471,11 +474,11 @@ class Enemy(AcceleratedObject):
 
     def can_attack(self):
         if not self.destroyed:
-            distance_x = self.player.x - self.x
+            distance_x = self.x - self.player.x
             distance_y = abs(self.player.y - self.y)
-            if self.player.orientation == 'right' and 0 >= distance_x >= -self.attack_range and distance_y <= 100:
+            if self.orientation == 'right' and 0 >= distance_x >= -self.attack_range and distance_y <= 100:
                 self.is_can_attack = True
-            elif self.player.orientation == 'left' and 0 <= distance_x <= self.attack_range and distance_y <= 100:
+            elif self.orientation == 'left' and 0 <= distance_x <= self.attack_range and distance_y <= 100:
                 self.is_can_attack = True
             else:
                 self.is_can_attack = False
@@ -483,7 +486,7 @@ class Enemy(AcceleratedObject):
             self.is_can_attack = False
 
     def attack(self, current_time):
-        attack_cooldown = int(60 / self.attack_speed)
+        attack_cooldown = int(120 / self.attack_speed)
         if current_time - self.last_attack_time >= attack_cooldown:
             print('attacked')
             self.last_attack_time = current_time

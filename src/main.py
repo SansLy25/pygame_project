@@ -24,6 +24,7 @@ def hover_check(event):
         app.pick_button.check_hover(event.pos)
 
 
+
 if __name__ == "__main__":
     pygame.init()
 
@@ -50,9 +51,9 @@ if __name__ == "__main__":
                                              90)),
                          animation=game_object_animation)
 
-    enemy = Enemy(500, 100, 100, 100, sprite_path="../assets/adventurer-00.png",
+    """enemy = Enemy(500, 100, 100, 100, sprite_path="../assets/adventurer-00.png",
                   a0=Acceleration(1, Vector.unit_from_angle(90)))
-    enemy.set_target(game_object)
+    enemy.set_target(game_object)"""
 
     running = True
     clock = pygame.time.Clock()
@@ -126,17 +127,17 @@ if __name__ == "__main__":
                 is_settings = False
 
         if game_started:
-            enemy.can_be_attacked()
+            """enemy.can_be_attacked()"""
             screen.fill((0, 0, 0))
             if not is_paused:
                 if not app.is_lvlup:
+                    enemies = list(filter(lambda x: type(x) is Enemy, room.objects))
                     if game_object.is_max_exp:
                         app.is_lvlup = True
                     if keys[pygame.K_j]:
-                        enemy.respawn()
                         game_object.debug()
                     if mouse[0]:
-                        game_object.attack([enemy], tick_count)
+                        game_object.attack(enemies, tick_count)
                     if keys[pygame.K_SPACE]:
                         game_object.jump()
 
@@ -159,12 +160,18 @@ if __name__ == "__main__":
                     for obj in room.objects:
                         if game_object.check_collide(obj):
                             collide = True
+                        if type(obj) is Enemy:
+                            obj.set_target(game_object)
+
+                    for obj in enemies:
+                        if obj.is_can_attack:
+                            obj.attack(tick_count)
 
                     for object in all_game_objects:
                         object.update(screen, [obj for obj in all_game_objects if obj != object])
 
-                    if enemy.is_can_attack:
-                        enemy.attack(tick_count)
+                    """if enemy.is_can_attack:
+                        enemy.attack(tick_count)"""
 
                     app.expbar.update(game_object.current_exp, game_object.max_exp)
                     app.expbar.draw()

@@ -3,9 +3,9 @@ from random import randint
 import pygame
 
 from engine.animation import Animation
-from engine.objects import SolidObject, Tile
+from engine.objects import SolidObject, Tile, Enemy
 from engine.utils import find_max_rectangles
-from engine.vectors import Speed
+from engine.vectors import Speed, Acceleration, Vector
 from game.enemies import Portal
 from src.game.enemies import Spikes
 
@@ -128,7 +128,11 @@ class Room:
         elif cell == 'p':
             animation = Animation([f'../assets/portal/{i}.png' for i in range(6)], 150)
             return Portal(0, 0, self.tile_width * 0.8, self.tile_height * 0.8,
-                               sprite_path='../assets/portal/1.png', animation=animation)
+                          sprite_path='../assets/portal/1.png', animation=animation)
+        elif cell == 'e':
+            return Enemy(0, 0, 80, 65, sprite_path="../assets/adventurer-00.png",
+                         a0=Acceleration(1, Vector.unit_from_angle(90)))
+
 
     def load_objects(self):
         objects = []
