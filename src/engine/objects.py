@@ -1,6 +1,8 @@
 import pygame
 import random
 import weakref
+import math
+
 from pygame import Rect
 
 from .animation import Animation
@@ -246,6 +248,7 @@ class SolidObject(GameObject):
     def resolve_collisions(self, others: list):
         pass
 
+
 class Tile(SolidObject):
     pass
 
@@ -275,7 +278,7 @@ class Player(AcceleratedObject):
         self.current_exp = 0
         self.attack_range = 100
         self.damage = 25
-        self.attack_speed = 2
+        self.attack_speed = 1.5
         self.crit_damage = 2
         self.crit_chance = 1
         self.last_attack_time = 0
@@ -289,6 +292,11 @@ class Player(AcceleratedObject):
         self.damage_mod = 0
         self.crit_chance_mod = 0
         self.crit_damage_mod = 0
+        self.is_attacked = False
+        self.attack_time = 50
+        self.attack_animation = Animation(
+            [f'../assets/player/animations/attack/{i}.png' for i in range(8)],
+            100)
         self.jump_animation = Animation(
             [f'../assets/player/animations/jump/{i}.png' for i in range(4)],
             150)
@@ -330,11 +338,11 @@ class Player(AcceleratedObject):
 
     def draw(self, screen):
         if self.animation:
-            if -3 < self.speed.get_x_projection() < 3 and (not self.is_jumped):
+            if -3 < self.speed.get_x_projection() < 3 and (not self.is_jumped) and not self.is_attacked:
                 self.sprite = self.start_sprite
                 self.animation.current_frame = 0
             else:
-                if not self.is_jumped:
+                if not self.is_jumped and not self.is_attacked:
                     self.animation.frame_duration = 500 * (
                             1 / self.speed.magnitude)
                 original_sprite = self.animation.get_current_frame()
@@ -360,6 +368,10 @@ class Player(AcceleratedObject):
         if current_time - self.last_attack_time >= attack_cooldown:
             print('attack')
             self.last_attack_time = current_time
+            self.animation = self.attack_animation
+            self.animation.current_frame = 0
+            self.is_attacked = True
+            self.attack_time -= 1
             for i in enemies:
                 if i.is_can_be_attacked:
                     if self.crit_chance + self.crit_chance_mod != 0:
@@ -372,7 +384,7 @@ class Player(AcceleratedObject):
                     else:
                         i.current_hp -= (self.damage + self.damage_mod)
                     if i.hp_check():
-                        self.current_exp += 75
+                        self.current_exp += 100
 
     def max_exp_check(self):
         if self.current_exp >= self.max_exp:
@@ -402,6 +414,12 @@ class Player(AcceleratedObject):
         self.hp_check()
         self.max_exp_check()
         self.item_found(game_objects)
+        if self.attack_time < 50:
+            self.attack_time -= 1
+            if self.attack_time <= 0:
+                self.animation = self.run_animation
+                self.attack_time = 50
+                self.is_attacked = False
 
     def hurt(self, damage, tick):
         cooldown = int(120 / 1)
@@ -540,3 +558,131 @@ class Enemy(AcceleratedObject):
         self.hp_check()
         self.can_attack()
         self.can_be_attacked()
+
+
+class Column(VelocityObject):
+    def __init__(self, x, y, width, height, player):
+        super().__init__(x, y, width, height)
+        self.speed = Speed(2, Vector(0, 5))
+        self.lifetime = 4000
+        self.player = player
+        self.creation_time = pygame.time.get_ticks()
+        self.active = True
+        self.load_sprite('../assets/sword.png')
+        self.sprite = pygame.transform.flip(self.sprite, False, True)
+
+    def damage(self, damage, tick):
+        if self.check_collide(self.player):
+            self.player.hurt(damage, tick)
+
+    def update(self, screen, game_objects: list):
+        super().update(screen, game_objects)
+        current_time = pygame.time.get_ticks()
+        if current_time - self.creation_time >= self.lifetime:
+            self.active = False
+
+
+class Bullet(VelocityObject):
+    def __init__(self, x, y, width, height, player):
+        super().__init__(x, y, width, height)
+        self.lifetime = 8000
+        self.player = player
+        self.moving = False
+        self.creation_time = pygame.time.get_ticks()
+        self.go_time = 2000
+        self.active = True
+        self.load_sprite('../assets/fireball.png')
+
+    def check_angle(self):
+        dx = self.player.x + self.player.width // 2 - self.x
+        dy = self.player.y + self.player.height // 2 - self.y
+        angle = math.atan2(dy, dx)
+        return math.degrees(angle)
+
+    def resolve_collisions(self, others: list):
+        pass
+
+    def resolve_physic(self, obj):
+        pass
+
+    def go(self):
+        self.speed = Speed(5, Vector.unit_from_angle(self.check_angle()))
+        self.moving = True
+
+    def damage(self, damage, tick):
+        if self.check_collide(self.player):
+            self.player.hurt(damage, tick)
+            self.active = False
+
+    def update(self, screen, game_objects: list):
+        super().update(screen, game_objects)
+        current_time = pygame.time.get_ticks()
+        if current_time - self.creation_time >= self.lifetime:
+            self.active = False
+        if current_time - self.creation_time >= self.go_time and not self.moving:
+            self.go()
+
+
+class Boss(AcceleratedObject):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.player = None
+        self.columns = []
+        self.bullets = []
+        self.interval = 5000
+        self.last_attack_time = 0
+        self.current_hp = 500
+        self.is_can_be_attacked = False
+
+    def set_target(self, player):
+        self.player = player
+
+    def attack(self):
+        c = random.randint(1, 3)
+        self.last_attack_time = pygame.time.get_ticks()
+        if c == 1:
+            self.column_attack()
+        else:
+            self.circle_attack()
+
+    def column_attack(self):
+        column = Column(random.randint(200, 1200), -700, 100, 700, self.player)
+        self.columns.append(column)
+
+    def circle_attack(self):
+        num_circles = 12
+        radius = 100
+        angle_step = 360 / num_circles
+
+        for i in range(num_circles):
+            angle = math.radians(i * angle_step)
+            circle_x = self.rect.centerx + radius * math.cos(angle)
+            circle_y = self.rect.centery + radius * math.sin(angle)
+            self.bullets.append(Bullet(circle_x, circle_y, 30, 30, self.player))
+
+    def update(self, screen, game_objects: list):
+        super().update(screen, game_objects)
+        current_time = pygame.time.get_ticks()
+        if current_time - self.last_attack_time > self.interval:
+            self.attack()
+        for i in self.columns:
+            if i.active:
+                i.update(screen, game_objects)
+        for i in self.bullets:
+            if i.active:
+                i.update(screen, game_objects)
+        distance_x = self.player.x - self.x
+        if self.player.orientation == 'right' and 0 >= distance_x >= -self.player.attack_range:
+            self.is_can_be_attacked = True
+        elif self.player.orientation == 'left' and 0 <= distance_x <= self.player.attack_range:
+            self.is_can_be_attacked = True
+        elif self.check_collide(self.player):
+            self.is_can_be_attacked = True
+        else:
+            self.is_can_be_attacked = False
+
+    def hp_check(self):
+        if self.current_hp <= 0:
+            print('dead')
+            return True
+        return False

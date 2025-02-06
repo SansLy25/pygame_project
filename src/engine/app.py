@@ -1,7 +1,7 @@
 import pygame
 
 from .commons import WIDTH, HEIGHT
-from .interface import Button, Slider, Text, UpgradeManager, ExperienceBar, HealthBar
+from .interface import Button, Slider, Text, UpgradeManager, ExperienceBar, HealthBar, BossBar
 
 
 
@@ -11,6 +11,7 @@ class App:
         self.is_menu_music = True
         self.upgrade_manager = UpgradeManager(self.screen)
         self.is_lvlup = False
+        self.boss_bar = BossBar(WIDTH // 2 - 500, 740, 1000, 50, 500, self.screen)
         self.expbar = ExperienceBar(450, 10, 500, 25, 100, self.screen)
         self.hpbar = HealthBar(60, 700, 50, 100, self.screen)
         self.music_volume = 100
