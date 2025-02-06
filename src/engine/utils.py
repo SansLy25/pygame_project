@@ -1,5 +1,6 @@
 from engine.objects import Tile
 
+
 def find_max_rectangles(matrix):
     """
     Функция для оптимизации, она используется для объединения объектов в группы,

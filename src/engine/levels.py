@@ -6,8 +6,8 @@ from engine.animation import Animation
 from engine.objects import SolidObject, Tile, Enemy, Platform
 from engine.utils import find_max_rectangles
 from engine.vectors import Acceleration, Vector
-from game.enemies import Portal, Tree, BigTree, Box, SmallBox
-from src.game.enemies import Spikes
+from game.entities import Portal, Tree, BigTree, Box, SmallBox, Chest
+from src.game.entities import Spikes
 
 
 class Room:
@@ -17,6 +17,8 @@ class Room:
         self.x = x
         self.y = y
         self.tile_size = tile_size
+        self.spawn_point = (0, 0)
+        self.set_spawn = False
 
         self.layout = self.load_room(file_path)
         self.objects = self.load_objects()
@@ -146,6 +148,9 @@ class Room:
         elif cell == 'h':
             return Platform(0, 0, self.tile_width * 0.4, self.tile_height * 0.4, sprite_path='../assets/objects/platform_left.png')
 
+        elif cell == 'c':
+            return Chest(0, 0, self.tile_width * 0.3, self.tile_height * 0.3, sprite_path='../assets/objects/chest.png')
+
 
     def load_objects(self):
         objects = []
@@ -172,7 +177,7 @@ class Room:
                         object.y = i * self.tile_height + self.tile_height * 0.6
                         object.x = j * self.tile_width + self.tile_width * 0.2
                     elif type(object) == Box:
-                        object.y = i * self.tile_height + self.tile_height * 0.5
+                        object.y = i * self.tile_height + self.tile_height * 0.42
                         object.x = j * self.tile_width
                     elif type(object) == Platform:
                         neighbours = self.get_neighbors(i, j)
@@ -183,6 +188,10 @@ class Room:
                         else:
                             object.y = i * self.tile_height
                             object.x = j * self.tile_width
+                    elif type(object) == Chest:
+                        object.y = i * self.tile_height + self.tile_height * 0.7
+                        object.x = j * self.tile_width + self.tile_height * 0.1
+
                     else:
                         object.y = i * self.tile_height
                         object.x = j * self.tile_width
@@ -192,6 +201,8 @@ class Room:
                     else:
                         tiles_matrix[i][j] = 0
                         objects.append(object)
+                elif self.layout[i][j] == 'S':
+                    self.spawn_point = (j * self.tile_width, i * self.tile_height)
 
         for tile_rect_list in find_max_rectangles(tiles_matrix):
             rectangle = self.get_merged_rectangle_tiles(tile_rect_list)

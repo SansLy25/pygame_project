@@ -1,5 +1,4 @@
 from engine.objects import GameObject, BackgroundNotScaledObject
-from engine.objects import SolidObject
 
 class Spikes(GameObject):
     pass
@@ -18,3 +17,8 @@ class Box(BackgroundNotScaledObject):
 
 class SmallBox(BackgroundNotScaledObject):
     pass
+
+class Chest(BackgroundNotScaledObject):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.is_opened = False

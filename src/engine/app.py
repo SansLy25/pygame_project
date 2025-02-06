@@ -1,6 +1,6 @@
 import pygame
 
-from .commons import WIDTH, HEIGHT
+from .commons import WIDTH
 from .interface import Button, Slider, Text, UpgradeManager, ExperienceBar, HealthBar, BossBar
 
 

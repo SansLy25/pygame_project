@@ -116,12 +116,7 @@ class GameObject:
         :param sprite_path: str
         :return: None
         """
-        try:
-            sprite = pygame.image.load(sprite_path)
-            self.sprite = pygame.transform.scale(sprite,
-                                                 (self.width, self.height))
-        except pygame.error as e:
-            print(f'Ошибка загрузки спрайта {e}')
+        self.load_sprite(sprite_path)
 
     def draw(self, screen):
         """
@@ -234,6 +229,7 @@ class BackgroundObject(GameObject):
     def resolve_collisions(self, others: list):
         pass
 
+
 class BackgroundNotScaledObject(BackgroundObject):
     def load_sprite(self, sprite_path):
         original_sprite = pygame.image.load(sprite_path)
@@ -241,7 +237,8 @@ class BackgroundNotScaledObject(BackgroundObject):
         ratio = original_width / original_height
         new_width = int(self.height * ratio)
 
-        self.sprite = pygame.transform.scale(original_sprite, (new_width, self.height))
+        self.sprite = pygame.transform.scale(original_sprite,
+                                             (new_width, self.height))
 
 
 class SolidObject(GameObject):
@@ -252,11 +249,14 @@ class SolidObject(GameObject):
 class Tile(SolidObject):
     pass
 
+
 class Platform(SolidObject):
     pass
 
+
 class Item(GameObject):
-    def __init__(self, x, y, width, height, damage, attack_speed, crit_damage, crit_chance, sprite_path=None):
+    def __init__(self, x, y, width, height, damage, attack_speed, crit_damage,
+                 crit_chance, sprite_path=None):
         super().__init__(x, y, width, height, sprite_path)
         self.damage = damage
         self.attack_speed = attack_speed
@@ -264,6 +264,9 @@ class Item(GameObject):
         self.crit_chance = crit_chance
         self.player = None
         self.is_found = False
+
+    def resolve_collisions(self, others: list):
+        pass
 
 
 class Player(AcceleratedObject):
@@ -273,7 +276,9 @@ class Player(AcceleratedObject):
         self.target_orientation = 'right'
         self.current_hp = 100
         self.max_hp = 100
-        self.lvl = 1
+        self.items = []
+        self.lvl = 0
+        self.room = 0
         self.max_exp = 100
         self.current_exp = 0
         self.attack_range = 100
@@ -334,11 +339,29 @@ class Player(AcceleratedObject):
             self.animation = self.run_animation
             self.animation.current_frame = 0
 
-        super().resolve_collisions(others)
+        for obj in others:
+            if self.check_collide(obj):
+                if type(obj) in (SolidObject, Tile, Platform):
+                    self.resolve_physic(obj)
+                if 'Chest' in str(type(obj)) and (not obj.is_opened):
+                    obj.width += 10
+                    obj.height += 10
+                    obj.y -= 10
+                    obj.set_sprite('../assets/objects/chest_opened.png')
+                    self.items.append(
+                        Item(obj.x, obj.y - 20, 80, 15, 20, 1, 20, 60,
+                             sprite_path='../assets/sword1.png'))
+                    obj.is_opened = True
+                elif 'Spike' in str(type(obj)):
+                    self.hurt(3, pygame.time.get_ticks())
+
+                elif 'Portal' in str(type(obj)):
+                    self.room += 1
 
     def draw(self, screen):
         if self.animation:
-            if -3 < self.speed.get_x_projection() < 3 and (not self.is_jumped) and not self.is_attacked:
+            if -3 < self.speed.get_x_projection() < 3 and (
+            not self.is_jumped) and not self.is_attacked:
                 self.sprite = self.start_sprite
                 self.animation.current_frame = 0
             else:
@@ -364,7 +387,8 @@ class Player(AcceleratedObject):
         screen.blit(self.sprite, (self.x, self.y))
 
     def attack(self, enemies, current_time):
-        attack_cooldown = int(120 / (self.attack_speed + self.attack_speed_mod))
+        attack_cooldown = int(
+            120 / (self.attack_speed + self.attack_speed_mod))
         if current_time - self.last_attack_time >= attack_cooldown:
             print('attack')
             self.last_attack_time = current_time
@@ -378,7 +402,8 @@ class Player(AcceleratedObject):
                         if random.randint(1, 101) in range(1,
                                                            self.crit_chance + self.crit_chance_mod):
                             print('crit')
-                            i.current_hp -= self.damage * (self.crit_damage + self.crit_damage_mod)
+                            i.current_hp -= self.damage * (
+                                        self.crit_damage + self.crit_damage_mod)
                         else:
                             i.current_hp -= (self.damage + self.damage_mod)
                     else:
@@ -398,10 +423,13 @@ class Player(AcceleratedObject):
             print('dead')
 
     def item_found(self, objects):
-        items = [obj for obj in objects if type(obj) is Item and self.check_collide(obj)]
+        items = [obj for obj in objects if
+                 type(obj) is Item and self.check_collide(obj)]
         if items:
             self.found_item = items[-1]
             self.is_item_found = True
+        else:
+            self.is_item_found = False
 
     def debug(self):
         print(self.crit_damage_mod)
@@ -572,7 +600,9 @@ class Column(VelocityObject):
         self.sprite = pygame.transform.flip(self.sprite, False, True)
 
     def damage(self, damage, tick):
+        print(self.player)
         if self.check_collide(self.player):
+
             self.player.hurt(damage, tick)
 
     def update(self, screen, game_objects: list):
@@ -611,6 +641,7 @@ class Bullet(VelocityObject):
 
     def damage(self, damage, tick):
         if self.check_collide(self.player):
+            print(self.player)
             self.player.hurt(damage, tick)
             self.active = False
 
@@ -658,7 +689,8 @@ class Boss(AcceleratedObject):
             angle = math.radians(i * angle_step)
             circle_x = self.rect.centerx + radius * math.cos(angle)
             circle_y = self.rect.centery + radius * math.sin(angle)
-            self.bullets.append(Bullet(circle_x, circle_y, 30, 30, self.player))
+            self.bullets.append(
+                Bullet(circle_x, circle_y, 30, 30, self.player))
 
     def update(self, screen, game_objects: list):
         super().update(screen, game_objects)

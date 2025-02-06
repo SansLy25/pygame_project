@@ -1,5 +1,7 @@
+from pathlib import Path
+
 import pygame
-from engine.objects import Player, GameObject, Enemy, SolidObject, Boss
+from engine.objects import Player, GameObject, Enemy, Boss
 from src.engine.app import App
 from src.engine.animation import Animation
 from src.engine.vectors import Vector, Acceleration, Speed
@@ -28,6 +30,10 @@ def hover_check(event):
 if __name__ == "__main__":
     pygame.init()
 
+    rooms_path = Path('../rooms/')
+    level_count = len([item for item in rooms_path.iterdir() if item.is_file()])
+    current_level = 0
+
     screen_width = WIDTH
     screen_height = HEIGHT
     screen = pygame.display.set_mode((screen_width, screen_height))
@@ -37,30 +43,30 @@ if __name__ == "__main__":
     font = pygame.font.Font(None, 36)
     pygame.display.set_caption("GameObject Example")
 
-    game_object_animation = Animation(
+    player_animation = Animation(
         [f'../assets/player/animations/run/{i}.png' for i in
          range(6)], 100)
 
     background = Background([f'../assets/background/{i}.png' for i in range(1, 7)], WIDTH, HEIGHT)
-    room = Room('../rooms/test.txt', 0, 0, 80)
+    room = Room('../rooms/0.txt', 0, 0, 80)
  
-
-    game_object = Player(100, 560, 45, 76,
+    print(room.spawn_point)
+    player = Player(room.spawn_point[0], room.spawn_point[1], 45, 76,
                          sprite_path="../assets/player/player_stay.png",
                          a0=Acceleration(1,
                                          Vector.unit_from_angle(
                                              90)),
-                         animation=game_object_animation)
+                         animation=player_animation)
 
     """enemy = Enemy(500, 100, 100, 100, sprite_path="../assets/adventurer-00.png",
                   a0=Acceleration(1, Vector.unit_from_angle(90)))
-    enemy.set_target(game_object)"""
+    enemy.set_target(player)"""
 
     running = True
-    boss = Boss(WIDTH // 2 - 200, 600, 400, 600, sprite_path='../assets/pixel-0077-668142567.png')
-    boss.set_target(game_object)
+
     clock = pygame.time.Clock()
     flag = True
+    boss_level = False
     game_started = False
     is_paused = False
     is_settings = False
@@ -92,38 +98,38 @@ if __name__ == "__main__":
                     is_settings = False
             elif app.is_lvlup:  # меню улучшений
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.upgrade_manager.crit_button.is_hovered:
-                    game_object.crit_damage = game_object.crit_damage * 1.2
+                    player.crit_damage = player.crit_damage * 1.2
                     app.is_lvlup = False
-                    game_object.is_max_exp = False
+                    player.is_max_exp = False
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.upgrade_manager.damage_button.is_hovered:
-                    game_object.damage = game_object.damage * 1.2
+                    player.damage = player.damage * 1.2
                     app.is_lvlup = False
-                    game_object.is_max_exp = False
+                    player.is_max_exp = False
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.upgrade_manager.crit_chance_button.is_hovered:
-                    game_object.crit_chance = int(game_object.crit_chance * 1.02)
+                    player.crit_chance = int(player.crit_chance * 1.02)
                     app.is_lvlup = False
-                    game_object.is_max_exp = False
+                    player.is_max_exp = False
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.upgrade_manager.hp_button.is_hovered:
-                    game_object.max_hp += 100
-                    game_object.current_hp += 100
+                    player.max_hp += 100
+                    player.current_hp += 100
                     app.is_lvlup = False
-                    game_object.is_max_exp = False
+                    player.is_max_exp = False
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.upgrade_manager.attack_speed_button.is_hovered:
-                    game_object.attack_speed += 0.5
+                    player.attack_speed += 0.5
                     app.is_lvlup = False
-                    game_object.is_max_exp = False
+                    player.is_max_exp = False
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.upgrade_manager.cancel_button.is_hovered:
                     app.is_lvlup = False
-                    game_object.is_max_exp = False
-            elif game_object.is_item_found:
+                    player.is_max_exp = False
+            elif player.is_item_found:
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.cancel_button.is_hovered:
-                    game_object.is_item_found = False
+                    player.is_item_found = False
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and app.pick_button.is_hovered:
-                    game_object.is_item_found = False
-                    game_object.damage_mod = game_object.found_item.damage
-                    game_object.attack_speed_mod = game_object.found_item.attack_speed
-                    game_object.crit_chance_mod = game_object.found_item.crit_chance
-                    game_object.crit_damage_mod = game_object.found_item.crit_damage
+                    player.is_item_found = False
+                    player.damage_mod = player.found_item.damage
+                    player.attack_speed_mod = player.found_item.attack_speed
+                    player.crit_chance_mod = player.found_item.crit_chance
+                    player.crit_damage_mod = player.found_item.crit_damage
             hover_check(event)
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 is_paused = not is_paused
@@ -134,63 +140,79 @@ if __name__ == "__main__":
             screen.fill((0, 0, 0))
             if not is_paused:
                 if not app.is_lvlup:
-                    enemies = list(filter(lambda x: type(x) is Enemy, room.objects)) + [boss]
-                    if game_object.is_max_exp:
+                    enemies = list(filter(lambda x: type(x) is Enemy, room.objects))
+
+                    if player.is_max_exp:
                         app.is_lvlup = True
-                    if keys[pygame.K_j]:
-                        print(boss.current_hp)
-                        print(boss.is_can_be_attacked)
                     if mouse[0]:
-                        game_object.attack(enemies, tick_count)
+                        player.attack(enemies, tick_count)
                     if keys[pygame.K_SPACE]:
-                        game_object.jump()
+                        player.jump()
+
 
                     if keys[pygame.K_RIGHT]:
-                        game_object.speed = game_object.speed + Speed(0.6,
+                        player.speed = player.speed + Speed(0.6,
                                                                       Vector.unit_from_angle(
                                                                           0))
-                        game_object.target_orientation = 'right'
+                        player.target_orientation = 'right'
 
                     if keys[pygame.K_LEFT]:
-                        game_object.speed = game_object.speed + Speed(0.6,
+                        player.speed = player.speed + Speed(0.6,
                                                                       Vector.unit_from_angle(
                                                                           180))
-                        game_object.target_orientation = 'left'
+                        player.target_orientation = 'left'
 
-                    all_game_objects = list(GameObject.all_game_objects) + room.objects
+                    all_objects = list(GameObject.all_game_objects)
+                    print(len(all_objects))
+                    if player.room > current_level:
+                        GameObject.all_game_objects.clear()
+                        GameObject.all_game_objects.add(player)
+                        room = Room(f'../rooms/{player.room}.txt', 0, 0, 80)
+                        player.x = room.spawn_point[0]
+                        player.y = room.spawn_point[1]
+                        current_level += 1
+                        if current_level == level_count - 1:
+                            boss = Boss(WIDTH // 2 - 200, 600, 400, 600,
+                                        sprite_path='../assets/pixel-0077-668142567.png')
+                            boss.set_target(player)
+                            boss_level = True
+                            enemies.append(boss)
                     # фон обновляем отдельно, тк это кластер объектов, а также нужно передать координаты игрока
-                    background.update(screen, game_object.x, game_object.y)
+                    background.update(screen, player.x, player.y)
                     collide = False
                     for obj in room.objects:
-                        if game_object.check_collide(obj):
+                        if player.check_collide(obj):
                             collide = True
                         if type(obj) is Enemy:
-                            obj.set_target(game_object)
+                            obj.set_target(player)
 
                     for obj in enemies:
                         if type(obj) is not Boss:
                             if obj.is_can_attack:
                                 obj.attack(tick_count)
 
-                    for object in all_game_objects:
-                        object.update(screen, [obj for obj in all_game_objects if obj != object])
+                    for object in all_objects:
+                        object.update(screen, [obj for obj in all_objects if obj != object])
 
-                    if boss.columns:
-                        for i in boss.columns:
-                            if i.active:
-                                i.damage(14, tick_count)
-                    if boss.bullets:
-                        for i in boss.bullets:
-                            if i.active:
-                                i.damage(14, tick_count)
+                    if boss_level:
+                        if boss.columns:
+                            for i in boss.columns:
+                                if i.active:
+                                    i.damage(14, tick_count)
+                        if boss.bullets:
+                            for i in boss.bullets:
+                                if i.active:
+                                    i.damage(14, tick_count)
 
-                    app.expbar.update(game_object.current_exp, game_object.max_exp)
+                    app.expbar.update(player.current_exp, player.max_exp)
                     app.expbar.draw()
-                    app.hpbar.update(game_object.current_hp, game_object.max_hp)
+                    app.hpbar.update(player.current_hp, player.max_hp)
                     app.hpbar.draw()
-                    app.boss_bar.draw()
-                    app.boss_bar.update(boss.current_hp)
-                    if game_object.is_item_found:
+                    if boss_level:
+                        app.boss_bar.draw()
+                        app.boss_bar.update(boss.current_hp)
+
+                    if player.is_item_found:
                         app.item_found()
 
                 elif app.is_lvlup:
