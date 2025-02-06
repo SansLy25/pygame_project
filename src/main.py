@@ -1,5 +1,5 @@
 import pygame
-from engine.objects import Player, GameObject, Enemy, SolidObject
+from engine.objects import Player, GameObject, Enemy, SolidObject, Boss
 from src.engine.app import App
 from src.engine.animation import Animation
 from src.engine.vectors import Vector, Acceleration, Speed
@@ -42,7 +42,7 @@ if __name__ == "__main__":
          range(6)], 100)
 
     background = Background([f'../assets/background/{i}.png' for i in range(1, 7)], WIDTH, HEIGHT)
-    room = Room('../rooms/room1.txt', 0, 0, 80)
+    room = Room('../rooms/test.txt', 0, 0, 80)
 
     game_object = Player(100, 560, 45, 76,
                          sprite_path="../assets/player/player_stay.png",
@@ -56,6 +56,8 @@ if __name__ == "__main__":
     enemy.set_target(game_object)"""
 
     running = True
+    boss = Boss(WIDTH // 2 - 200, 600, 400, 600, sprite_path='../assets/pixel-0077-668142567.png')
+    boss.set_target(game_object)
     clock = pygame.time.Clock()
     flag = True
     game_started = False
@@ -131,11 +133,12 @@ if __name__ == "__main__":
             screen.fill((0, 0, 0))
             if not is_paused:
                 if not app.is_lvlup:
-                    enemies = list(filter(lambda x: type(x) is Enemy, room.objects))
+                    enemies = list(filter(lambda x: type(x) is Enemy, room.objects)) + [boss]
                     if game_object.is_max_exp:
                         app.is_lvlup = True
                     if keys[pygame.K_j]:
-                        game_object.debug()
+                        print(boss.current_hp)
+                        print(boss.is_can_be_attacked)
                     if mouse[0]:
                         game_object.attack(enemies, tick_count)
                     if keys[pygame.K_SPACE]:
@@ -164,16 +167,28 @@ if __name__ == "__main__":
                             obj.set_target(game_object)
 
                     for obj in enemies:
-                        if obj.is_can_attack:
-                            obj.attack(tick_count)
+                        if type(obj) is not Boss:
+                            if obj.is_can_attack:
+                                obj.attack(tick_count)
 
                     for object in all_game_objects:
                         object.update(screen, [obj for obj in all_game_objects if obj != object])
+
+                    if boss.columns:
+                        for i in boss.columns:
+                            if i.active:
+                                i.damage(14, tick_count)
+                    if boss.bullets:
+                        for i in boss.bullets:
+                            if i.active:
+                                i.damage(14, tick_count)
 
                     app.expbar.update(game_object.current_exp, game_object.max_exp)
                     app.expbar.draw()
                     app.hpbar.update(game_object.current_hp, game_object.max_hp)
                     app.hpbar.draw()
+                    app.boss_bar.draw()
+                    app.boss_bar.update(boss.current_hp)
                     if game_object.is_item_found:
                         app.item_found()
 
