@@ -325,7 +325,7 @@ class Player(AcceleratedObject):
         self.crit_chance_mod = 0
         self.crit_damage_mod = 0
         self.is_attacked = False
-        self.attack_time = 50
+        self.attack_time = 25
         self.attack_animation = Animation(
             [f"../assets/player/animations/attack/{i}.png" for i in range(8)], 100
         )
@@ -493,11 +493,11 @@ class Player(AcceleratedObject):
         self.hp_check()
         self.max_exp_check()
         self.item_found(game_objects)
-        if self.attack_time < 50:
+        if self.attack_time < 25:
             self.attack_time -= 1
             if self.attack_time <= 0:
                 self.animation = self.run_animation
-                self.attack_time = 50
+                self.attack_time = 25
                 self.is_attacked = False
 
     def hurt(self, damage, tick):

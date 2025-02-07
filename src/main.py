@@ -68,6 +68,7 @@ if __name__ == "__main__":
     game_other = False
     flag = True
     boss_level = False
+    is_bossfight_music = False
     you_win = False
     game_started = False
     is_paused = False
@@ -93,32 +94,13 @@ if __name__ == "__main__":
                 app.is_menu_music = False
                 pygame.mixer.music.load("../assets/stage1.mp3")
                 pygame.mixer.music.play(-1)
-            if not is_settings and is_paused:  # пауза
-                if (
-                    event.type == pygame.MOUSEBUTTONDOWN
-                    and event.button == 1
-                    and app.resume_button.is_hovered
-                ):
-                    is_paused = not is_paused
-                if (
-                    event.type == pygame.MOUSEBUTTONDOWN
-                    and event.button == 1
-                    and app.exit_button.is_hovered
-                ):
-                    game_started = False
-                if (
-                    event.type == pygame.MOUSEBUTTONDOWN
-                    and event.button == 1
-                    and app.settings_button.is_hovered
-                ):
-                    is_settings = True
-            elif is_settings and is_paused:  # настройки
+            if is_paused:  # настройки
                 if (
                     event.type == pygame.MOUSEBUTTONDOWN
                     and event.button == 1
                     and app.back1_button.is_hovered
                 ):
-                    is_settings = False
+                    is_paused = False
             elif app.is_lvlup:  # меню улучшений
                 if (
                     event.type == pygame.MOUSEBUTTONDOWN
@@ -202,6 +184,11 @@ if __name__ == "__main__":
                     player.current_time = tick_count
 
                     if boss_level:
+                        if not is_bossfight_music:
+                            pygame.mixer.music.stop()
+                            pygame.mixer.music.load("../assets/boss-fight.mp3")
+                            pygame.mixer.music.play(-1)
+                            is_bossfight_music = True
                         if boss.hp_check():
                             you_win = True
                             is_paused = True
