@@ -24,7 +24,7 @@ class Room:
         self.objects = self.load_objects()
 
     def load_room(self, filename):
-        with open(filename, 'r') as mapFile:
+        with open(filename, "r") as mapFile:
             level_map = [line.strip() for line in mapFile]
 
         layout = [list(string) for string in level_map]
@@ -36,130 +36,208 @@ class Room:
             return neighbours.get(direction, default)
 
         def air_condition(air_neighbours, filled_neighbours):
-            directions = {'lu': 'left_up', 'um': 'up_mid', 'ru': 'right_up',
-                          'lm': 'left_mid', 'rm': 'right_mid',
-                          'ld': 'left_down', 'dm': 'down_mid', 'rd': 'right_down'}
+            directions = {
+                "lu": "left_up",
+                "um": "up_mid",
+                "ru": "right_up",
+                "lm": "left_mid",
+                "rm": "right_mid",
+                "ld": "left_down",
+                "dm": "down_mid",
+                "rd": "right_down",
+            }
             for neighbour in air_neighbours:
-                if get_neighbour(directions[neighbour]) == '#':
+                if get_neighbour(directions[neighbour]) == "#":
                     return False
 
             for neighbour in filled_neighbours:
-                if get_neighbour(directions[neighbour]) != '#':
+                if get_neighbour(directions[neighbour]) != "#":
                     return False
 
             return True
 
-        sprite = None
         """
         Здесь исходя из соседей тайла выбирается нужный спрайт, к сожалению по другому это не сделать, да
         выглядит страшненько, но максимально сжато (основное вынес в 2 другие функции), и понятно
         """
-        if cell == '.':
+        if cell == ".":
             return None
-        elif cell == '#':
-            if air_condition(['lm', 'um'], ['dm', 'rm']):
+        elif cell == "#":
+            if air_condition(["lm", "um"], ["dm", "rm"]):
                 rand = randint(0, 10)
-                sprite = '../assets/tiles/Tile_01.png' if rand < 2 else '../assets/tiles/Tile_14.png'
-            elif air_condition(['um'], ['lm', 'rm', 'dm']):
+                sprite = (
+                    "../assets/tiles/Tile_01.png"
+                    if rand < 2
+                    else "../assets/tiles/Tile_14.png"
+                )
+            elif air_condition(["um"], ["lm", "rm", "dm"]):
                 rand = randint(0, 10)
-                sprite = '../assets/tiles/Tile_03.png' if rand < 2 else '../assets/tiles/Tile_16.png'
-            elif air_condition(['um', 'ru', 'rm'], ['dm', 'lm']):
+                sprite = (
+                    "../assets/tiles/Tile_03.png"
+                    if rand < 2
+                    else "../assets/tiles/Tile_16.png"
+                )
+            elif air_condition(["um", "ru", "rm"], ["dm", "lm"]):
                 rand = randint(0, 10)
-                sprite = '../assets/tiles/Tile_04.png' if rand < 2 else '../assets/tiles/Tile_17.png'
-            elif air_condition(['um', 'lm', 'rm'], ['dm']):
+                sprite = (
+                    "../assets/tiles/Tile_04.png"
+                    if rand < 2
+                    else "../assets/tiles/Tile_17.png"
+                )
+            elif air_condition(["um", "lm", "rm"], ["dm"]):
                 rand = randint(0, 10)
-                sprite = '../assets/tiles/Tile_09.png' if rand < 2 else '../assets/tiles/Tile_44.png'
-            elif air_condition(['lm'], ['um', 'rm', 'dm']):
-                sprite = '../assets/tiles/Tile_10.png'
-            elif air_condition(['rm'], ['um', 'dm', 'lm']):
-                sprite = '../assets/tiles/Tile_13.png'
-            elif air_condition(['lm', 'rm'], ['um', 'dm']):
-                sprite = '../assets/tiles/Tile_18.png'
-            elif air_condition(['lm', 'dm'], ['um', 'rm']):
-                sprite = '../assets/tiles/Tile_19.png'
-            elif air_condition(['dm'], ['lm', 'um', 'rm']):
-                sprite = '../assets/tiles/Tile_21.png'
-            elif air_condition(['rm', 'dm'], ['um', 'lm']):
-                sprite = '../assets/tiles/Tile_22.png'
-            elif air_condition(['lm', 'dm', 'um'], ['rm']):
-                sprite = '../assets/tiles/Tile_23.png'
-            elif air_condition(['um', 'dm'], ['rm', 'lm']):
-                sprite = '../assets/tiles/Tile_25.png'
-            elif air_condition(['um', 'dm', 'rm'], ['lm']):
-                sprite = '../assets/tiles/Tile_26.png'
-            elif air_condition(['lm', 'rm', 'dm'], ['um']):
-                sprite = '../assets/tiles/Tile_27.png'
-            elif air_condition(['rd'], ['lu', 'um', 'ru', 'rm', 'lm', 'ld', 'dm']):
-                sprite = '../assets/tiles/Tile_28.png'
-            elif air_condition(['ld'], ['lu', 'um', 'ru', 'rm', 'lm', 'rd', 'dm']):
-                sprite = '../assets/tiles/Tile_29.png'
-            elif air_condition(['ld', 'lu'], ['um', 'ru', 'rm', 'lm', 'rd', 'dm']):
-                sprite = '../assets/tiles/Tile_30.png'
-            elif air_condition(['lu', 'ru'], ['um', 'rm', 'lm', 'rd', 'dm', 'ld']):
-                sprite = '../assets/tiles/Tile_31.png'
-            elif air_condition(['lu', 'rd'], ['um', 'rm', 'lm', 'dm', 'ld', 'ru']):
-                sprite = '../assets/tiles/Tile_32.png'
-            elif air_condition(['um', 'rm', 'lm', 'dm'], []):
-                sprite = '../assets/tiles/Tile_36.png'
-            elif air_condition(['ru'], ['ld', 'lu', 'um', 'rm', 'lm', 'rd', 'dm']):
-                sprite = '../assets/tiles/Tile_37.png'
-            elif air_condition(['lu'], ['ld', 'ru', 'um', 'rm', 'lm', 'rd', 'dm']):
-                sprite = '../assets/tiles/Tile_38.png'
-            elif air_condition(['ld', 'rd'], ['ru', 'um', 'rm', 'lm', 'dm', 'lu']):
-                sprite = '../assets/tiles/Tile_39.png'
-            elif air_condition(['ru', 'rd'], ['um', 'rm', 'lm', 'dm', 'lu', 'ld']):
-                sprite = '../assets/tiles/Tile_40.png'
-            elif air_condition(['ru', 'ld'], ['um', 'rm', 'lm', 'dm', 'lu', 'rd']):
-                sprite = '../assets/tiles/Tile_41.png'
-            elif air_condition(['ru', 'ld'], ['um', 'rm', 'lm', 'dm', 'lu', 'rd']):
-                sprite = '../assets/tiles/Tile_41.png'
+                sprite = (
+                    "../assets/tiles/Tile_09.png"
+                    if rand < 2
+                    else "../assets/tiles/Tile_44.png"
+                )
+            elif air_condition(["lm"], ["um", "rm", "dm"]):
+                sprite = "../assets/tiles/Tile_10.png"
+            elif air_condition(["rm"], ["um", "dm", "lm"]):
+                sprite = "../assets/tiles/Tile_13.png"
+            elif air_condition(["lm", "rm"], ["um", "dm"]):
+                sprite = "../assets/tiles/Tile_18.png"
+            elif air_condition(["lm", "dm"], ["um", "rm"]):
+                sprite = "../assets/tiles/Tile_19.png"
+            elif air_condition(["dm"], ["lm", "um", "rm"]):
+                sprite = "../assets/tiles/Tile_21.png"
+            elif air_condition(["rm", "dm"], ["um", "lm"]):
+                sprite = "../assets/tiles/Tile_22.png"
+            elif air_condition(["lm", "dm", "um"], ["rm"]):
+                sprite = "../assets/tiles/Tile_23.png"
+            elif air_condition(["um", "dm"], ["rm", "lm"]):
+                sprite = "../assets/tiles/Tile_25.png"
+            elif air_condition(["um", "dm", "rm"], ["lm"]):
+                sprite = "../assets/tiles/Tile_26.png"
+            elif air_condition(["lm", "rm", "dm"], ["um"]):
+                sprite = "../assets/tiles/Tile_27.png"
+            elif air_condition(["rd"], ["lu", "um", "ru", "rm", "lm", "ld", "dm"]):
+                sprite = "../assets/tiles/Tile_28.png"
+            elif air_condition(["ld"], ["lu", "um", "ru", "rm", "lm", "rd", "dm"]):
+                sprite = "../assets/tiles/Tile_29.png"
+            elif air_condition(["ld", "lu"], ["um", "ru", "rm", "lm", "rd", "dm"]):
+                sprite = "../assets/tiles/Tile_30.png"
+            elif air_condition(["lu", "ru"], ["um", "rm", "lm", "rd", "dm", "ld"]):
+                sprite = "../assets/tiles/Tile_31.png"
+            elif air_condition(["lu", "rd"], ["um", "rm", "lm", "dm", "ld", "ru"]):
+                sprite = "../assets/tiles/Tile_32.png"
+            elif air_condition(["um", "rm", "lm", "dm"], []):
+                sprite = "../assets/tiles/Tile_36.png"
+            elif air_condition(["ru"], ["ld", "lu", "um", "rm", "lm", "rd", "dm"]):
+                sprite = "../assets/tiles/Tile_37.png"
+            elif air_condition(["lu"], ["ld", "ru", "um", "rm", "lm", "rd", "dm"]):
+                sprite = "../assets/tiles/Tile_38.png"
+            elif air_condition(["ld", "rd"], ["ru", "um", "rm", "lm", "dm", "lu"]):
+                sprite = "../assets/tiles/Tile_39.png"
+            elif air_condition(["ru", "rd"], ["um", "rm", "lm", "dm", "lu", "ld"]):
+                sprite = "../assets/tiles/Tile_40.png"
+            elif air_condition(["ru", "ld"], ["um", "rm", "lm", "dm", "lu", "rd"]):
+                sprite = "../assets/tiles/Tile_41.png"
+            elif air_condition(["ru", "ld"], ["um", "rm", "lm", "dm", "lu", "rd"]):
+                sprite = "../assets/tiles/Tile_41.png"
             else:
                 rand_num = randint(0, 1)
                 if rand_num == 0:
-                    sprite = '../assets/tiles/Tile_11.png'
+                    sprite = "../assets/tiles/Tile_11.png"
                 else:
-                    sprite = '../assets/tiles/Tile_12.png'
+                    sprite = "../assets/tiles/Tile_12.png"
 
-            return Tile(0, 0, self.tile_width, self.tile_height,
-                               sprite_path=sprite)
-        elif cell == 's':
-            return Spikes(0, 0, self.tile_width, self.tile_height * 0.2,
-                               sprite_path='../assets/tiles/spikes.png')
-        elif cell == 'p':
-            animation = Animation([f'../assets/portal/{i}.png' for i in range(6)], 150)
-            return Portal(0, 0, self.tile_width * 0.8, self.tile_height * 0.8,
-                          sprite_path='../assets/portal/1.png', animation=animation)
-        elif cell == 'e':
-            return Enemy(0, 0, 80, 65, sprite_path="../assets/adventurer-00.png",
-                         a0=Acceleration(1, Vector.unit_from_angle(90)))
+            return Tile(0, 0, self.tile_width, self.tile_height, sprite_path=sprite)
+        elif cell == "s":
+            return Spikes(
+                0,
+                0,
+                self.tile_width,
+                self.tile_height * 0.2,
+                sprite_path="../assets/tiles/spikes.png",
+            )
+        elif cell == "p":
+            animation = Animation([f"../assets/portal/{i}.png" for i in range(6)], 150)
+            return Portal(
+                0,
+                0,
+                self.tile_width * 0.8,
+                self.tile_height * 0.8,
+                sprite_path="../assets/portal/2.png",
+                animation=animation,
+            )
+        elif cell == "e":
+            animation = Animation(
+                [f"../assets/enemy/Walk/{i}.png" for i in range(6)], 100, "run"
+            )
+            return Enemy(
+                0,
+                0,
+                45,
+                76,
+                sprite_path="../assets/enemy/idle/0.png",
+                animation=animation,
+                a0=Acceleration(1, Vector.unit_from_angle(90)),
+            )
 
-        elif cell == 't':
-            return Tree(0, 0, self.tile_width, self.tile_height * 0.5, sprite_path='../assets/objects/13.png')
+        elif cell == "t":
+            return Tree(
+                0,
+                0,
+                self.tile_width,
+                self.tile_height * 0.5,
+                sprite_path="../assets/objects/13.png",
+            )
 
-        elif cell == 'T':
-            return BigTree(0, 0, self.tile_width, self.tile_height * 1.5, sprite_path='../assets/objects/16.png')
+        elif cell == "T":
+            return BigTree(
+                0,
+                0,
+                self.tile_width,
+                self.tile_height * 1.5,
+                sprite_path="../assets/objects/16.png",
+            )
 
-        elif cell == 'b':
-            return SmallBox(0, 0, self.tile_width, self.tile_height * 0.4, sprite_path='../assets/objects/Box4.png')
+        elif cell == "b":
+            return SmallBox(
+                0,
+                0,
+                self.tile_width,
+                self.tile_height * 0.4,
+                sprite_path="../assets/objects/Box4.png",
+            )
 
-        elif cell == 'B':
-            return Box(0, 0, self.tile_width, self.tile_height * 0.6, sprite_path='../assets/objects/Box3.png')
+        elif cell == "B":
+            return Box(
+                0,
+                0,
+                self.tile_width,
+                self.tile_height * 0.6,
+                sprite_path="../assets/objects/Box3.png",
+            )
 
-        elif cell == 'h':
-            return Platform(0, 0, self.tile_width * 0.4, self.tile_height * 0.4, sprite_path='../assets/objects/platform_left.png')
+        elif cell == "h":
+            return Platform(
+                0,
+                0,
+                self.tile_width * 0.4,
+                self.tile_height * 0.4,
+                sprite_path="../assets/objects/platform_left.png",
+            )
 
-        elif cell == 'c':
-            return Chest(0, 0, self.tile_width * 0.3, self.tile_height * 0.3, sprite_path='../assets/objects/chest.png')
-
+        elif cell == "c":
+            return Chest(
+                0,
+                0,
+                self.tile_width * 0.3,
+                self.tile_height * 0.3,
+                sprite_path="../assets/objects/chest.png",
+            )
 
     def load_objects(self):
         objects = []
-        tiles_matrix = [[0 for _ in range(len(self.layout[0]))] for _ in range(len(self.layout))]
+        tiles_matrix = [
+            [0 for _ in range(len(self.layout[0]))] for _ in range(len(self.layout))
+        ]
 
         for i in range(len(self.layout)):
             for j in range(len(self.layout[0])):
-                object = self.choose_object(self.layout[i][j],
-                                            self.get_neighbors(i, j))
+                object = self.choose_object(self.layout[i][j], self.get_neighbors(i, j))
                 if not object is None:
                     if type(object) == Spikes:
                         object.y = i * self.tile_height + self.tile_size * 0.8
@@ -181,8 +259,10 @@ class Room:
                         object.x = j * self.tile_width
                     elif type(object) == Platform:
                         neighbours = self.get_neighbors(i, j)
-                        if neighbours.get('right_mid', '#') == '#':
-                            object.sprite = pygame.transform.flip(object.sprite, True, False)
+                        if neighbours.get("right_mid", "#") == "#":
+                            object.sprite = pygame.transform.flip(
+                                object.sprite, True, False
+                            )
                             object.y = i * self.tile_height
                             object.x = j * self.tile_width + self.tile_width * 0.6
                         else:
@@ -201,7 +281,7 @@ class Room:
                     else:
                         tiles_matrix[i][j] = 0
                         objects.append(object)
-                elif self.layout[i][j] == 'S':
+                elif self.layout[i][j] == "S":
                     self.spawn_point = (j * self.tile_width, i * self.tile_height)
 
         for tile_rect_list in find_max_rectangles(tiles_matrix):
@@ -236,9 +316,14 @@ class Room:
         rows, cols = len(self.layout), len(self.layout[0])
 
         directions = {
-            "left_up": (-1, -1), "up_mid": (-1, 0), "right_up": (-1, 1),
-            "left_mid": (0, -1), "right_mid": (0, 1),
-            "left_down": (1, -1), "down_mid": (1, 0), "right_down": (1, 1)
+            "left_up": (-1, -1),
+            "up_mid": (-1, 0),
+            "right_up": (-1, 1),
+            "left_mid": (0, -1),
+            "right_mid": (0, 1),
+            "left_down": (1, -1),
+            "down_mid": (1, 0),
+            "right_down": (1, 1),
         }
 
         for key, (dr, dc) in directions.items():
@@ -247,4 +332,3 @@ class Room:
                 neighbors[key] = self.layout[new_row][new_col]
 
         return neighbors
-

@@ -21,13 +21,20 @@ def find_max_rectangles(matrix):
                 width = 1
                 height = 1
 
-                while j + width < cols and type(matrix[i][j + width]) == Tile and not used[i][j + width]:
+                while (
+                    j + width < cols
+                    and type(matrix[i][j + width]) == Tile
+                    and not used[i][j + width]
+                ):
                     width += 1
 
                 while i + height < rows:
                     can_expand = True
                     for w in range(width):
-                        if type(matrix[i + height][j + w]) != Tile or used[i + height][j + w]:
+                        if (
+                            type(matrix[i + height][j + w]) != Tile
+                            or used[i + height][j + w]
+                        ):
                             can_expand = False
                             break
                     if not can_expand:

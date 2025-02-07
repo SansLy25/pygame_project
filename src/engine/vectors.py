@@ -1,9 +1,11 @@
 from math import cos, sin, radians
 
+
 class Vector:
     """
     Класс векторов, поддерживает основные операции с векторами
     """
+
     def __init__(self, x: float, y: float):
         self.x = x
         self.y = y
@@ -13,7 +15,7 @@ class Vector:
         self.y = y
 
     def magnitude(self):
-        return (self.x ** 2 + self.y ** 2) ** 0.5
+        return (self.x**2 + self.y**2) ** 0.5
 
     def normalize(self):
         mag = self.magnitude()
@@ -29,10 +31,10 @@ class Vector:
         return Vector(self.x - other.x, self.y - other.y)
 
     def __mul__(self, other):
-        return Vector(self.x * other.x, + self.y * other.y)
+        return Vector(self.x * other.x, +self.y * other.y)
 
     def __str__(self):
-        return f'Vector({self.x}, {self.y})'
+        return f"Vector({self.x}, {self.y})"
 
     def scale(self, scalar):
         return Vector(self.x * scalar, self.y * scalar)
@@ -47,9 +49,7 @@ class Vector:
         :return:
         """
         angle_in_radians = radians(angle)
-        return Vector(round(cos(angle_in_radians), 2),
-                      round(sin(angle_in_radians), 2))
-
+        return Vector(round(cos(angle_in_radians), 2), round(sin(angle_in_radians), 2))
 
 
 class Speed:
@@ -88,7 +88,7 @@ class Speed:
         return Speed(self.magnitude * other, self.direction)
 
     def __str__(self):
-        return f'Speed({self.magnitude}, {self.direction})'
+        return f"Speed({self.magnitude}, {self.direction})"
 
 
 class Acceleration(Speed):
@@ -97,4 +97,4 @@ class Acceleration(Speed):
         return Acceleration(speed_object.magnitude, speed_object.direction)
 
     def __str__(self):
-        return f'Acceleration({self.magnitude}, {self.direction})'
+        return f"Acceleration({self.magnitude}, {self.direction})"

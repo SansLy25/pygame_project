@@ -4,6 +4,7 @@ import weakref
 import math
 
 from pygame import Rect
+from .commons import WIDTH, HEIGHT, DEBUG
 
 from .animation import Animation
 from .vectors import Speed, Acceleration
@@ -18,7 +19,7 @@ class GameObject:
         Для доступа к параметрам Rect использовать эти переменные, в данном
         случае это абстракция, для геометрического представления
         объекта используется класс Rect, через эти переменные с помощью property можно
-        получать координаты, длину и ширину прямоугольника, 
+        получать координаты, длину и ширину прямоугольника,
         """
         GameObject.all_game_objects.add(self)
         self.rect = Rect(x, y, width, height)
@@ -54,8 +55,7 @@ class GameObject:
         """
         Чисто внутренний метод для property
         """
-        return [self.rect.left, self.rect.top,
-                self.rect.width, self.rect.height]
+        return [self.rect.left, self.rect.top, self.rect.width, self.rect.height]
 
     @x.setter
     def x(self, x):
@@ -126,7 +126,8 @@ class GameObject:
         if self.animation:
             self.animation.update()
             self.sprite = pygame.transform.scale(
-                self.animation.get_current_frame(), (self.width, self.height))
+                self.animation.get_current_frame(), (self.width, self.height)
+            )
 
         if self.sprite:
             screen.blit(self.sprite, (self.x, self.y))
@@ -140,33 +141,34 @@ class GameObject:
         :param obj:
         :return:
         """
-        overlap_y = min(self.y + self.height,
-                        obj.y + obj.height) - max(self.y, obj.y)
-        overlap_x = min(self.x + self.width, obj.x + obj.width) - max(
-            self.x, obj.x)
+        overlap_y = min(self.y + self.height, obj.y + obj.height) - max(self.y, obj.y)
+        overlap_x = min(self.x + self.width, obj.x + obj.width) - max(self.x, obj.x)
 
         if overlap_y < overlap_x:
             if self.y + self.height > obj.y > self.y:
                 self.y = obj.y - self.height
                 if self.speed.direction.y > 0:
-                    self.speed = Speed(self.speed.magnitude,
-                                       Vector(self.speed.direction.x,
-                                              0))
+                    self.speed = Speed(
+                        self.speed.magnitude, Vector(self.speed.direction.x, 0)
+                    )
 
             elif self.y < obj.y + obj.height < self.y + self.height:
                 self.y = obj.y + obj.height
-                self.speed = Speed(self.speed.magnitude,
-                                   Vector(self.speed.direction.x, 0))
+                self.speed = Speed(
+                    self.speed.magnitude, Vector(self.speed.direction.x, 0)
+                )
         else:
             if self.x + self.width > obj.x > self.x:
                 self.x = obj.x - self.width
-                self.speed = Speed(self.speed.magnitude,
-                                   Vector(0, self.speed.direction.y))
+                self.speed = Speed(
+                    self.speed.magnitude, Vector(0, self.speed.direction.y)
+                )
 
             elif self.x < obj.x + obj.width < self.x + self.width:
                 self.x = obj.x + obj.width
-                self.speed = Speed(self.speed.magnitude,
-                                   Vector(0, self.speed.direction.y))
+                self.speed = Speed(
+                    self.speed.magnitude, Vector(0, self.speed.direction.y)
+                )
 
     def resolve_collisions(self, others: list):
         """
@@ -181,7 +183,7 @@ class GameObject:
                     self.resolve_physic(obj)
 
     def update(self, screen, game_objects: list):
-        if hasattr(self, 'move'):
+        if hasattr(self, "move"):
             self.move()
         self.resolve_collisions(game_objects)
         self.draw(screen)
@@ -192,9 +194,16 @@ class VelocityObject(GameObject):
     Класс для обьекта со скоростью
     """
 
-    def __init__(self, x, y, width, height,
-                 v0=Speed(0, Vector(0, 0)),
-                 sprite_path=None, animation=None):
+    def __init__(
+        self,
+        x,
+        y,
+        width,
+        height,
+        v0=Speed(0, Vector(0, 0)),
+        sprite_path=None,
+        animation=None,
+    ):
         super().__init__(x, y, width, height, sprite_path, animation)
         self.speed = v0
 
@@ -208,10 +217,17 @@ class AcceleratedObject(VelocityObject):
     Класс для обьекта с ускорением
     """
 
-    def __init__(self, x, y, width, height,
-                 v0=Speed(0, Vector(0, 0)),
-                 a0=Acceleration(0, Vector(0, 0)),
-                 sprite_path=None, animation=None):
+    def __init__(
+        self,
+        x,
+        y,
+        width,
+        height,
+        v0=Speed(0, Vector(0, 0)),
+        a0=Acceleration(0, Vector(0, 0)),
+        sprite_path=None,
+        animation=None,
+    ):
         super().__init__(x, y, width, height, v0, sprite_path, animation)
         self.acceleration = a0
 
@@ -237,8 +253,7 @@ class BackgroundNotScaledObject(BackgroundObject):
         ratio = original_width / original_height
         new_width = int(self.height * ratio)
 
-        self.sprite = pygame.transform.scale(original_sprite,
-                                             (new_width, self.height))
+        self.sprite = pygame.transform.scale(original_sprite, (new_width, self.height))
 
 
 class SolidObject(GameObject):
@@ -255,8 +270,18 @@ class Platform(SolidObject):
 
 
 class Item(GameObject):
-    def __init__(self, x, y, width, height, damage, attack_speed, crit_damage,
-                 crit_chance, sprite_path=None):
+    def __init__(
+        self,
+        x,
+        y,
+        width,
+        height,
+        damage,
+        attack_speed,
+        crit_damage,
+        crit_chance,
+        sprite_path=None,
+    ):
         super().__init__(x, y, width, height, sprite_path)
         self.damage = damage
         self.attack_speed = attack_speed
@@ -272,15 +297,17 @@ class Item(GameObject):
 class Player(AcceleratedObject):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.orientation = 'right'
-        self.target_orientation = 'right'
-        self.current_hp = 100
+        self.orientation = "right"
+        self.target_orientation = "right"
+        self.current_hp = 1000 if DEBUG else 100
         self.max_hp = 100
         self.items = []
         self.lvl = 0
         self.room = 0
         self.max_exp = 100
+        self.current_time = 0
         self.current_exp = 0
+        self.hurts_repeats = 0
         self.attack_range = 100
         self.damage = 25
         self.attack_speed = 1.5
@@ -300,22 +327,27 @@ class Player(AcceleratedObject):
         self.is_attacked = False
         self.attack_time = 50
         self.attack_animation = Animation(
-            [f'../assets/player/animations/attack/{i}.png' for i in range(8)],
-            100)
+            [f"../assets/player/animations/attack/{i}.png" for i in range(8)], 100
+        )
         self.jump_animation = Animation(
-            [f'../assets/player/animations/jump/{i}.png' for i in range(4)],
-            150)
+            [f"../assets/player/animations/jump/{i}.png" for i in range(4)], 150
+        )
         self.run_animation = Animation(
-            [f'../assets/player/animations/run/{i}.png' for i in
-             range(6)], 100)
+            [f"../assets/player/animations/run/{i}.png" for i in range(6)], 100, "run"
+        )
+        self.hurt_animation = Animation(
+            [f"../assets/player/animations/hurt/{i}.png" for i in range(1)], 1, "hurt"
+        )
 
     def _is_on_floor(self, objects):
         for obj in objects:
             if type(obj) in (SolidObject, Platform):
-                overlap_y = min(self.y + self.height,
-                                obj.y + obj.height) - max(self.y, obj.y)
+                overlap_y = min(self.y + self.height, obj.y + obj.height) - max(
+                    self.y, obj.y
+                )
                 overlap_x = min(self.x + self.width, obj.x + obj.width) - max(
-                    self.x, obj.x)
+                    self.x, obj.x
+                )
 
                 if overlap_y < overlap_x:
                     if self.y + self.height > obj.y - 1 > self.y:
@@ -325,14 +357,15 @@ class Player(AcceleratedObject):
 
     def jump(self):
         if self.is_on_floor:
-            self.speed = self.speed + Speed(25,
-                                            Vector.unit_from_angle(
-                                                270))
+            self.speed = self.speed + Speed(25, Vector.unit_from_angle(270))
             self.is_jumped = True
             self.animation = self.jump_animation
             self.animation.current_frame = 0
 
     def resolve_collisions(self, others: list):
+        if self.x > WIDTH or self.y > HEIGHT or self.x < 0:
+            self.current_hp = 0
+
         self.is_on_floor = self._is_on_floor(others)
         if self.is_jumped and self.is_on_floor:
             self.is_jumped = False
@@ -343,54 +376,68 @@ class Player(AcceleratedObject):
             if self.check_collide(obj):
                 if type(obj) in (SolidObject, Tile, Platform):
                     self.resolve_physic(obj)
-                if 'Chest' in str(type(obj)) and (not obj.is_opened):
+                if "Chest" in str(type(obj)) and (not obj.is_opened):
                     obj.width += 10
                     obj.height += 10
                     obj.y -= 10
-                    obj.set_sprite('../assets/objects/chest_opened.png')
+                    obj.set_sprite("../assets/objects/chest_opened.png")
                     self.items.append(
-                        Item(obj.x, obj.y - 20, 80, 15, 20, 1, 20, 60,
-                             sprite_path='../assets/sword1.png'))
+                        Item(
+                            obj.x,
+                            obj.y - 20,
+                            80,
+                            15,
+                            self.room + 2,
+                            1,
+                            self.room * 2,
+                            20,
+                            sprite_path="../assets/sword1.png",
+                        )
+                    )
                     obj.is_opened = True
-                elif 'Spike' in str(type(obj)):
-                    self.hurt(3, pygame.time.get_ticks())
+                elif "Spike" in str(type(obj)):
+                    self.hurt(20, self.current_time)
 
-                elif 'Portal' in str(type(obj)):
+                elif "Portal" in str(type(obj)):
                     self.room += 1
 
     def draw(self, screen):
         if self.animation:
-            if -3 < self.speed.get_x_projection() < 3 and (
-            not self.is_jumped) and not self.is_attacked:
+            if -3 < self.speed.get_x_projection() < 3 and self.animation.type == "run":
                 self.sprite = self.start_sprite
                 self.animation.current_frame = 0
             else:
-                if not self.is_jumped and not self.is_attacked:
-                    self.animation.frame_duration = 500 * (
-                            1 / self.speed.magnitude)
+                if self.animation.type == "run":
+                    self.animation.frame_duration = 500 * (1 / self.speed.magnitude)
                 original_sprite = self.animation.get_current_frame()
                 original_width, original_height = original_sprite.get_size()
                 ratio = original_width / original_height
                 new_width = int(self.height * ratio)
 
-                self.sprite = pygame.transform.scale(original_sprite,
-                                                     (new_width, self.height))
+                self.sprite = pygame.transform.scale(
+                    original_sprite, (new_width, self.height)
+                )
                 self.animation.update()
 
-            if self.orientation == 'left':
+            if self.orientation == "left":
                 self.sprite = pygame.transform.flip(self.sprite, True, False)
 
         if self.target_orientation != self.orientation:
             self.orientation = self.target_orientation
             self.sprite = pygame.transform.flip(self.sprite, True, False)
 
+        if self.animation.type == "hurt":
+            self.hurts_repeats += 1
+
+        if self.hurts_repeats > 10:
+            self.animation = self.run_animation
+            self.hurts_repeats = 0
+
         screen.blit(self.sprite, (self.x, self.y))
 
     def attack(self, enemies, current_time):
-        attack_cooldown = int(
-            120 / (self.attack_speed + self.attack_speed_mod))
+        attack_cooldown = int(120 / (self.attack_speed + self.attack_speed_mod))
         if current_time - self.last_attack_time >= attack_cooldown:
-            print('attack')
             self.last_attack_time = current_time
             self.animation = self.attack_animation
             self.animation.current_frame = 0
@@ -398,16 +445,19 @@ class Player(AcceleratedObject):
             self.attack_time -= 1
             for i in enemies:
                 if i.is_can_be_attacked:
+                    if type(i) != Boss:
+                        i.animation = i.hurt_animation
                     if self.crit_chance + self.crit_chance_mod != 0:
-                        if random.randint(1, 101) in range(1,
-                                                           self.crit_chance + self.crit_chance_mod):
-                            print('crit')
+                        if random.randint(1, 101) in range(
+                            1, self.crit_chance + self.crit_chance_mod
+                        ):
                             i.current_hp -= self.damage * (
-                                        self.crit_damage + self.crit_damage_mod)
+                                self.crit_damage + self.crit_damage_mod
+                            )
                         else:
-                            i.current_hp -= (self.damage + self.damage_mod)
+                            i.current_hp -= self.damage + self.damage_mod
                     else:
-                        i.current_hp -= (self.damage + self.damage_mod)
+                        i.current_hp -= self.damage + self.damage_mod
                     if i.hp_check():
                         self.current_exp += 100
 
@@ -420,11 +470,12 @@ class Player(AcceleratedObject):
 
     def hp_check(self):
         if self.current_hp <= 0:
-            print('dead')
+            return True
 
     def item_found(self, objects):
-        items = [obj for obj in objects if
-                 type(obj) is Item and self.check_collide(obj)]
+        items = [
+            obj for obj in objects if type(obj) is Item and self.check_collide(obj)
+        ]
         if items:
             self.found_item = items[-1]
             self.is_item_found = True
@@ -452,13 +503,19 @@ class Player(AcceleratedObject):
     def hurt(self, damage, tick):
         cooldown = int(120 / 1)
         if tick - self.last_damage_time >= cooldown:
+            self.animation = self.hurt_animation
             self.last_damage_time = tick
             self.current_hp -= damage
+            return True
+
+        return False
 
 
 class Enemy(AcceleratedObject):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.orientation = "right"
+        self.target_orientation = "right"
         self.player = None
         self.spawn_x = self.x
         self.spawn_y = self.y
@@ -470,33 +527,60 @@ class Enemy(AcceleratedObject):
         self.damage = 7
         self.attack_speed = 0.5
         self.last_attack_time = 0
-        self.orientation = 'left'
-        self.target_orientation = 'left'
+        self.hurts_repeats = 0
         self.vision_range = 200
         self.is_following = False
         self.max_vision_range = 300
         self.is_can_be_attacked = False
         self.destroyed = False
         self.is_can_attack = False
-        """self.run_animation = Animation(
-            [f'../assets/enemy/walk/{i}.png' for i in
-             range(4)], 100)
+        self.run_animation = Animation(
+            [f"../assets/enemy/walk/{i}.png" for i in range(6)], 100, "run"
+        )
         self.attack_animation = Animation(
-            [f'../assets/enemy/attack/{i}.png' for i in
-             range(4)], 100)
+            [f"../assets/enemy/attack/{i}.png" for i in range(8)], 250, "attack"
+        )
         self.hurt_animation = Animation(
-            [f'../assets/enemy/hurt/{i}.png' for i in
-             range(7)], 100)"""
+            [f"../assets/enemy/idle/{i}.png" for i in range(2)], 200, "hurt"
+        )
 
     def draw(self, screen):
-        if not self.destroyed:
-            if self.animation:
-                self.sprite = self.animation.get_current_frame()
+        if self.animation:
+            if -2 < self.speed.get_x_projection() < 2 and self.animation.type == "run":
+                self.sprite = self.start_sprite
+                self.animation.current_frame = 0
+            else:
+                if self.animation.type == "run":
+                    self.animation.frame_duration = 250 * (1 / self.speed.magnitude)
+
+                original_sprite = self.animation.get_current_frame()
+                original_width, original_height = original_sprite.get_size()
+                ratio = original_width / original_height
+                new_width = int(self.height * ratio)
+
+                self.sprite = pygame.transform.scale(
+                    original_sprite, (new_width, self.height)
+                )
+                if self.animation.type == "hurt":
+                    self.hurts_repeats += 1
+
                 self.animation.update()
+                if (
+                    self.animation.type == "attack"
+                    and self.animation.current_frame == len(self.animation.frames) - 1
+                ) or (self.animation.type == "hurt" and self.hurts_repeats > 10):
+                    self.animation = self.run_animation
+                    self.animation.current_frame = 0
+                    self.hurts_repeats = 0
 
-            if self.target_orientation != self.orientation:
-                self.orientation = self.target_orientation
+            if self.orientation == "left":
+                self.sprite = pygame.transform.flip(self.sprite, True, False)
 
+        if self.target_orientation != self.orientation:
+            self.orientation = self.target_orientation
+            self.sprite = pygame.transform.flip(self.sprite, True, False)
+
+        if not self.destroyed:
             screen.blit(self.sprite, (self.x, self.y))
 
     def set_target(self, player):
@@ -511,24 +595,26 @@ class Enemy(AcceleratedObject):
                 if distance_x <= self.vision_range and distance_y <= 100:
                     self.is_following = True
                     if self.player.x < self.x:
-                        self.speed = self.speed + Speed(0.3,
-                                                        Vector.unit_from_angle(
-                                                            180))
+                        self.speed = self.speed + Speed(
+                            0.3, Vector.unit_from_angle(180)
+                        )
+                        self.target_orientation = "left"
                     elif self.player.x > self.x:
-                        self.speed = self.speed + Speed(0.3,
-                                                        Vector.unit_from_angle(
-                                                            0))
+                        self.speed = self.speed + Speed(0.3, Vector.unit_from_angle(0))
+                        self.target_orientation = "right"
                 elif self.is_following:
                     distance_x = abs(self.player.x - self.x)
                     if distance_x <= self.max_vision_range:
                         if self.player.x < self.x:
-                            self.speed = self.speed + Speed(0.3,
-                                                            Vector.unit_from_angle(
-                                                                180))
+                            self.speed = self.speed + Speed(
+                                0.3, Vector.unit_from_angle(180)
+                            )
+                            self.target_orientation = "left"
                         elif self.player.x > self.x:
-                            self.speed = self.speed + Speed(0.3,
-                                                            Vector.unit_from_angle(
-                                                                0))
+                            self.speed = self.speed + Speed(
+                                0.3, Vector.unit_from_angle(0)
+                            )
+                            self.target_orientation = "right"
                     else:
                         self.is_following = False
 
@@ -536,9 +622,17 @@ class Enemy(AcceleratedObject):
         if not self.destroyed:
             distance_x = self.player.x - self.x
             distance_y = abs(self.player.y - self.y)
-            if self.player.orientation == 'right' and 0 >= distance_x >= -self.player.attack_range and distance_y <= 100:
+            if (
+                self.player.orientation == "right"
+                and 0 >= distance_x >= -self.player.attack_range
+                and distance_y <= 100
+            ):
                 self.is_can_be_attacked = True
-            elif self.player.orientation == 'left' and 0 <= distance_x <= self.player.attack_range and distance_y <= 100:
+            elif (
+                self.player.orientation == "left"
+                and 0 <= distance_x <= self.player.attack_range
+                and distance_y <= 100
+            ):
                 self.is_can_be_attacked = True
             else:
                 self.is_can_be_attacked = False
@@ -549,9 +643,17 @@ class Enemy(AcceleratedObject):
         if not self.destroyed:
             distance_x = self.x - self.player.x
             distance_y = abs(self.player.y - self.y)
-            if self.orientation == 'right' and 0 >= distance_x >= -self.attack_range and distance_y <= 100:
+            if (
+                self.orientation == "right"
+                and 0 >= distance_x >= -self.attack_range
+                and distance_y <= 100
+            ):
                 self.is_can_attack = True
-            elif self.orientation == 'left' and 0 <= distance_x <= self.attack_range and distance_y <= 100:
+            elif (
+                self.orientation == "left"
+                and 0 <= distance_x <= self.attack_range
+                and distance_y <= 100
+            ):
                 self.is_can_attack = True
             else:
                 self.is_can_attack = False
@@ -561,9 +663,9 @@ class Enemy(AcceleratedObject):
     def attack(self, current_time):
         attack_cooldown = int(120 / self.attack_speed)
         if current_time - self.last_attack_time >= attack_cooldown:
-            print('attacked')
             self.last_attack_time = current_time
-            self.player.hurt(self.damage, current_time)
+            if self.player.hurt(self.damage, current_time):
+                self.animation = self.attack_animation
 
     def hp_check(self):
         if self.current_hp <= 0:
@@ -596,13 +698,11 @@ class Column(VelocityObject):
         self.player = player
         self.creation_time = pygame.time.get_ticks()
         self.active = True
-        self.load_sprite('../assets/sword.png')
+        self.load_sprite("../assets/pillar.png")
         self.sprite = pygame.transform.flip(self.sprite, False, True)
 
     def damage(self, damage, tick):
-        print(self.player)
         if self.check_collide(self.player):
-
             self.player.hurt(damage, tick)
 
     def update(self, screen, game_objects: list):
@@ -621,7 +721,7 @@ class Bullet(VelocityObject):
         self.creation_time = pygame.time.get_ticks()
         self.go_time = 2000
         self.active = True
-        self.load_sprite('../assets/fireball.png')
+        self.load_sprite("../assets/fireball.png")
 
     def check_angle(self):
         dx = self.player.x + self.player.width // 2 - self.x
@@ -641,7 +741,6 @@ class Bullet(VelocityObject):
 
     def damage(self, damage, tick):
         if self.check_collide(self.player):
-            print(self.player)
             self.player.hurt(damage, tick)
             self.active = False
 
@@ -689,8 +788,7 @@ class Boss(AcceleratedObject):
             angle = math.radians(i * angle_step)
             circle_x = self.rect.centerx + radius * math.cos(angle)
             circle_y = self.rect.centery + radius * math.sin(angle)
-            self.bullets.append(
-                Bullet(circle_x, circle_y, 30, 30, self.player))
+            self.bullets.append(Bullet(circle_x, circle_y, 30, 30, self.player))
 
     def update(self, screen, game_objects: list):
         super().update(screen, game_objects)
@@ -704,9 +802,15 @@ class Boss(AcceleratedObject):
             if i.active:
                 i.update(screen, game_objects)
         distance_x = self.player.x - self.x
-        if self.player.orientation == 'right' and 0 >= distance_x >= -self.player.attack_range:
+        if (
+            self.player.orientation == "right"
+            and 0 >= distance_x >= -self.player.attack_range
+        ):
             self.is_can_be_attacked = True
-        elif self.player.orientation == 'left' and 0 <= distance_x <= self.player.attack_range:
+        elif (
+            self.player.orientation == "left"
+            and 0 <= distance_x <= self.player.attack_range
+        ):
             self.is_can_be_attacked = True
         elif self.check_collide(self.player):
             self.is_can_be_attacked = True
@@ -715,6 +819,5 @@ class Boss(AcceleratedObject):
 
     def hp_check(self):
         if self.current_hp <= 0:
-            print('dead')
             return True
         return False

@@ -1,13 +1,14 @@
 import pygame
 
+
 class Animation:
-    def __init__(self, frames_paths, frame_duration):
+    def __init__(self, frames_paths, frame_duration, type=None):
         """
         во frames указать пути до всех кадров анимации
         :param frames_paths: list[str]
         """
-        self.frames = [pygame.image.load(frames_path) for frames_path in
-                       frames_paths]
+        self.type = type
+        self.frames = [pygame.image.load(frames_path) for frames_path in frames_paths]
         self.frame_duration = frame_duration
         self.current_frame = 0
         self.last_update_time = pygame.time.get_ticks()
