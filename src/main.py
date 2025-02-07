@@ -215,13 +215,13 @@ if __name__ == "__main__":
                     if keys[pygame.K_SPACE]:
                         player.jump()
 
-                    if keys[pygame.K_RIGHT]:
+                    if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
                         player.speed = player.speed + Speed(
                             0.6, Vector.unit_from_angle(0)
                         )
                         player.target_orientation = "right"
 
-                    if keys[pygame.K_LEFT]:
+                    if keys[pygame.K_LEFT] or keys[pygame.K_a]:
                         player.speed = player.speed + Speed(
                             0.6, Vector.unit_from_angle(180)
                         )
